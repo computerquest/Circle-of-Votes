@@ -5,37 +5,56 @@
         "label": "A node",
         "x": 0,
         "y": 0,
-        "size": 3
+        "size": 5
       },
       {
         "id": "n1",
-        "label": "Another node",
-        "x": 3,
+        "label": "Majority",
+        "x": 1,
         "y": 1,
         "size": 2
       },
       {
         "id": "n2",
-        "label": "And a last one",
+        "label": "Minority",
         "x": 1,
-        "y": 3,
+        "y": -1,
+        "size": 1
+      },
+      {
+        "id": "n3",
+        "label": "Majority",
+        "x": -1,
+        "y": 1,
+        "size": 2
+      },
+      {
+        "id": "n4",
+        "label": "Minority",
+        "x": -1,
+        "y": -1,
         "size": 1
       }
     ],
     "edges": [
       {
         "id": "e0",
-        "source": "n0",
-        "target": "n1"
+        "source": "n1",
+        "target": "n0"
       },
       {
         "id": "e1",
-        "source": "n1",
-        "target": "n2"
+        "source": "n2",
+        "target": "n0"
       },
       {
         "id": "e2",
-        "source": "n2",
+        "source": "n3",
+        "target": "n0"
+      },
+      {
+        "id": "e3",
+        "source": "n4",
         "target": "n0"
       }
     ]
