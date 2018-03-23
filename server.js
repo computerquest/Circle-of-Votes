@@ -13,31 +13,36 @@ app.get('/graphs/:billId', function (req, res) {
     res.send(req.params)
 })
 
+var openResponse;
+var proResponse;
 app.get('/testing', function (req, res) {
     var request = require('request');
     res.setHeader('Content-Type', 'application/json');
 
     //when requesting more https://stackoverflow.com/questions/32828415/how-to-run-multiple-async-functions-then-execute-callback
     var first = new Promise((resolve, reject) => {
-        resolve(clientC.memberVotePositions({ memberId:'S000033'}))
+        var resp = clientC.memberVotePositions({ memberId: 'R000558' })
+        console.log(resp)
+        resolve(resp)
     })
 
+    var s = "stuff"
+    var oResp;
     var second = new Promise((resolve, reject) => {
-        resolve(clientO.makeRequest('getLegislators', { cid: 'S000033', sendData: 'true', output: 'json' }).on('complete', function(res) {
-            if (res instanceof Error) console.log('Something went wrong');
-            
-            //console.log(res);
+        resolve(clientO.makeRequest('getLegislators', { id: 'N00004357', output: 'json' })
+            .on('complete', function (res) {
+                if (res instanceof Error) console.log('Something went wrong');
 
-            return res
-          }))
-    });
+                processOS(res)
+            })
+    )});
 
-    clientO.makeRequest('getLegislators', {id: 'S000033', output: 'json'})
+    /*clientO.makeRequest('getLegislators', { id: 'N00004357', output: 'json'})
     .on('complete', function(res) {
       if (res instanceof Error) console.log('Something went wrong');
       
       console.log(res);
-    });
+    });*/
 
     Promise.all([first, second]).then(function (value, boo = res) {
         //console.log(value[1])
@@ -45,3 +50,13 @@ app.get('/testing', function (req, res) {
         return value;
     })
 })
+
+function processC(data) {
+    proResponse = data;
+    console.log(proResponse)
+}
+
+function processOS(data) {
+    openResponse = data;
+    //console.log(openResponse)
+}
