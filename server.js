@@ -41,7 +41,6 @@ app.get('/testing', function (req, res) {
     });
 
     Promise.all([first, second]).then(function (value, boo = res) {
-        console.log(value[0])
         console.log(value[1])
         boo.send(JSON.parse(JSON.stringify(value[0])))
     })
