@@ -1,13 +1,16 @@
 const express = require('express')
-const app = express()
-var Congress = require('propublica-congress-node');  
-var OpenSecretsClient = require('opensecrets-client', 'json');
+var Congress = require('propublica-congress-node');   //maximum of 5000 calls per day
+var OpenSecretsClient = require('opensecrets-client', 'json'); //maximum of 200 calls per day
 var util = require("util")
-var XLSX = require('xlsx')
 var request = require('request');
+var mergeJSON = require("merge-json");
+var fs = require('fs');
 
-var clientC = new Congress('CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF');
-var clientO = new OpenSecretsClient('8fad4c535bd7763204689b57c70137fd ');
+const app = express()
+ppc = require('propublica-congress').create('CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF');
+var clientO = new OpenSecretsClient('8fad4c535bd7763204689b57c70137fd'); //the json values are returned as a string
+
+var opKeys = ['8fad4c535bd7763204689b57c70137fd', 'd54dbd5a4f572862c2609aab9487a365', 'f8cea77db428d13c088ac8afff35e519', 'be091217e1dd3b340e2511e38699efa7', 'db37558aa3f970cadfb8345c26d1dde6','5928e99d96fac2a30906a126a293714d', '1ad00b500ae4d8a0a3333c7e1689eebb', 'c29969ede23d4f4871205c97548a8290', '2d87571b3707af874843d8e9f3391666']
 
 app.use(express.static('public'))
 
@@ -19,29 +22,72 @@ app.get('/graphs/:billId', function (req, res) {
 
 var openResponse;
 var proResponse;
+
+app.get('/datarefresh', function (req, res) {
+    res.setHeader('Content-Type', 'application/json');
+
+    var overallData = {}
+    var first = ppc.getMemberList('house', 115)
+    var firstS = ppc.getMemberList('senate', 115)
+
+    var second = ppc.getMemberList('house', 114)
+    var secondS = ppc.getMemberList('senate', 114)
+
+    var third = ppc.getMemberList('house', 113)
+    var thirdS = ppc.getMemberList('senate', 113)
+
+    //this retrieves all the general infromation for congress people for the last 3 congresses
+    Promise.all([first, firstS, second, secondS, third, thirdS]).then(function(valAr, overall=overallData, resp=res) {
+        console.log('1')
+        for(var a = 0; a < valAr.length; a++) {
+            value = valAr[a].results['0'].members
+            for(var i = 0; i < value.length; i++) {
+                if(overall[value[i].id] != undefined) {
+                    continue
+                } else {
+                    overall[value[i].id] = value[i]
+                }
+            }
+        }
+    }).then(function(value) {
+        console.log('2')
+        for(var i = 0; i < Object.keys(overallData).length; i++) {
+            var key = i%8
+            var localClient = new OpenSecretsClient(opKeys[key]);
+            localClient.makeRequest('candIndustry', { cid: overallData[Object.keys(overallData)[i]].crp_id, output: 'json' })
+            .on('complete', function (input) {
+                if (input instanceof Error) console.log('Something went wrong');
+                mergeJSON.merge(overallData[i], JSON.parse(input))
+            })
+        }
+
+    }).then(function(resp) {
+        console.log('3')
+        for(var i = 0; i < Object.keys(overallData).length; i++) {
+            fs.writeFile('./persistentdata/'+Object.keys(overallData)[i]+'.json', JSON.stringify(overallData[Object.keys(overallData)[i]]), { flag: 'w', encoding:'utf8' }, function (err) {
+                if (err) throw err;
+            });
+        }  
+        res.send(JSON.parse(JSON.stringify(overallData)))
+    })
+})
+
+
 app.get('/testing', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
-    //when requesting more https://stackoverflow.com/questions/32828415/how-to-run-multiple-async-functions-then-execute-callback
-    var first = new Promise((resolve, reject) => {
-        var resp = clientC.memberVotePositions({ memberId: 'R000570' })
-        resolve(resp)
-    })
+    var first = ppc.getCurrentSenators('NY')
 
     var second = new Promise((resolve, reject) => {
-        var external;
-        var workbook = XLSX.readFile('crpid.xls');
-        var returnedJson = XLSX.utils.sheet_to_json(workbook.Sheets['Candidate IDs - 2016']);
-        resolve(JSON.parse(JSON.stringify(returnedJson)))
-        clientO.makeRequest('candSummary', { id: 'N00004357', output: 'json' })
+        clientO.makeRequest('candIndustry', { cid: 'N00004357', output: 'json' })
             .on('complete', function (res) {
                 if (res instanceof Error) console.log('Something went wrong');
-                //resolve(res)
+                resolve(res)
             })
     });
-
     Promise.all([first, second]).then(function (value, boo = res) {
-        console.log(value[1])
-        boo.send(JSON.parse(JSON.stringify(value[0])))
+        var ans =  mergeJSON.merge(JSON.parse(JSON.stringify(value[0])), JSON.parse(value[1]))
+        
+        boo.send(ans)
     })
 })
