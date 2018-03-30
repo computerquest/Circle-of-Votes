@@ -54,14 +54,12 @@ app.get('/datarefresh', function (req, res) {
         for(var i = 0; i < Object.keys(overallData).length; i++) {
             var key = i%8
             var localClient = new OpenSecretsClient(opKeys[key]);
-            localClient.makeRequest('candIndustry', { cid: overallData[Object.keys(overallData)[i]].crp_id, output: 'json' })
-            .on('complete', function (input) {
-                if (input instanceof Error) console.log('Something went wrong');
-                mergeJSON.merge(overallData[i], JSON.parse(input))
-            })
+            console.log(overallData[Object.keys(overallData)[i]].crp_id) 
+            writingCallback(i, overallData[Object.keys(overallData)[i]])
         }
 
-    }).then(function(resp) {
+        //res.send(JSON.parse(JSON.stringify(overallData)))
+    })/*.then(function(resp) {
         console.log('3')
         for(var i = 0; i < Object.keys(overallData).length; i++) {
             fs.writeFile('./persistentdata/'+Object.keys(overallData)[i]+'.json', JSON.stringify(overallData[Object.keys(overallData)[i]]), { flag: 'w', encoding:'utf8' }, function (err) {
@@ -69,10 +67,21 @@ app.get('/datarefresh', function (req, res) {
             });
         }  
         res.send(JSON.parse(JSON.stringify(overallData)))
-    })
+    })*/
 })
 
-
+function writingCallback(pos, overallData) {
+    clientO.makeRequest('candIndustry', { cid: overallData.crp_id, output: 'json' })
+    .on('complete', function (input) {
+        if (input instanceof Error) console.log('Something went wrong');
+        console.log('3xx '+ pos + ' '+ overallData)
+        if (input instanceof Error) console.log('Something went wrong');
+        overallData = mergeJSON.merge(overallData, JSON.parse(input))
+        fs.writeFile('./persistentdata/'+ overallData.id+'.json', JSON.stringify(overallData), { flag: 'w', encoding:'utf8' }, function (err) {
+            if (err) throw err;
+        });
+    })
+}
 app.get('/testing', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
 
