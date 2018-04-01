@@ -5,8 +5,14 @@ var util = require("util")
 var request = require('request');
 var mergeJSON = require("merge-json");
 var fs = require('fs');
+var net = require('net'),
+JsonSocket = require('json-socket');
+var mustacheExpress = require('mustache-express');
 
 const app = express()
+app.set('view engine', 'mustache')
+app.engine('mustache', mustacheExpress());
+app.set('views', __dirname + '/public'); // you can change '/views' to '/public',
 ppc = require('propublica-congress').create('CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF');
 var clientO = new OpenSecretsClient('8fad4c535bd7763204689b57c70137fd'); //the json values are returned as a string
 
@@ -17,18 +23,24 @@ app.use(express.static('public'))
 app.listen(3000, () => console.log('Example app listening on port 3000!'))
 
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
-    res.setHeader('Content-Type', 'application/json')
+    console.log('starting')
+    res.setHeader('Content-Type', 'text/html')
     ppc.getBill(req.params.bill, req.params.congress).then(function (value) {
+        console.log('bil')
         fs.writeFile('./public/data/billinfo.json', JSON.stringify(value), function (err) {
             if (err) throw err;
         });
 
+        console.log(req.url)
+
         var str = ''+value.results[0].votes[req.params.vote].api_url;
+        console.log(str)
         var arr = str.split("/");
         var nodes = [];
         var edges = []
         var members = {}
         ppc.getRollCallVotes(arr[6], arr[8], arr[10].replace('.json', ''), arr[5]).then(function(resp){
+            console.log('votes')
             //sort nodes by parties
             var sortedResp = resp.results.votes.vote.positions.sort(function(a, b) {
                 return a.party.charCodeAt(0)-b.party.charCodeAt(0);
@@ -235,18 +247,12 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             }
         }).then(function(value) {
             solution = { "nodes": nodes, "edges": edges }
-            fs.writeFile('./public/data/nodes.json', JSON.stringify(solution), function (err) {
-                if (err) throw err;
-            });
 
             console.log('loading the file.....')
-            res.redirect('../../../graph.html')
+            res.render('graph.mustache', { data: JSON.stringify(solution) })
         })
     })
 })
-
-var openResponse;
-var proResponse;
 
 app.get('/datarefresh', function (req, res) {
     res.setHeader('Content-Type', 'application/json');
