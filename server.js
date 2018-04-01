@@ -18,18 +18,16 @@ app.listen(3000, () => console.log('Example app listening on port 3000!'))
 
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     res.setHeader('Content-Type', 'application/json')
-    //console.log(req.params.bill, req.params.congress)
     ppc.getBill(req.params.bill, req.params.congress).then(function (value) {
         fs.writeFile('./public/data/billinfo.json', JSON.stringify(value), function (err) {
             if (err) throw err;
         });
 
-        console.log('' + value.results[0].votes[req.params.vote].api_url)
         var str = ''+value.results[0].votes[req.params.vote].api_url;
         var arr = str.split("/");
-        console.log(arr)
-        //console.log(voteInfo)
-        var nodes;
+        var nodes = [];
+        var edges = []
+        var members = {}
         ppc.getRollCallVotes(arr[6], arr[8], arr[10].replace('.json', ''), arr[5]).then(function(resp){
             //sort nodes by parties
             var sortedResp = resp.results.votes.vote.positions.sort(function(a, b) {
@@ -37,65 +35,213 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             })       
             
             //puts all of the members of congress in the circular formation and sets up the basic node
+            var party = {}
             for(var i = 0; i < sortedResp.length; i++) {
                 var info = sortedResp[i]
-                var cVal = '#ef3'
-                if(info.party == 'R') {
-                    cVal = '#f00'
-                } else if (info.party == 'D') {
-                    cVal = '#003'
+                var cVal = '#ffff33'
+                members[info.member_id] = { vote: info.vote_position, party: info.party, voteShown: false }
+                if(typeof party[info.party] === 'undefined') {
+                    party[info.party] = {x: 0, y: 0, memberid:[], name: info.party, yes: 0, no: 0, none: 0}
                 }
-                var angle = i*Math.PI/sortedResp.length
-                //coloring needs to reflect vote not party
-                nodes.push({id: info.member_id, label: info.name, color: cVal, size:1, x: Math.cos(angle), y: Math.sin(angle)})
-            }
-            
-            //make the special interest nodes (parties, donors)
-            var topDoner = new Promise(function (resolve, reject) {
-                var topIndustry = {}
-                for (var i = 0; i < nodes.length; i++) {
-                    var obj = JSON.parse(fs.readFileSync('./persistentdata' + nodes[i].id + '/' + req.params.congress +'.json', 'utf8'));
-            
-                    var response = sortedResp[i].vote_position;
-                    if(response == 'Yes') {
-                        topIndustry[obj.response.industries.industry[0].industry_name].yes++
-                    } else if (response == 'No') {
-                       topIndustry[obj.response.industries.industry[0].industry_name].no++
-                    } else {
-                        topIndustry[obj.response.industries.industry[0].industry_name].none++
-                    }
-
-                    topIndustry[obj.response.industries.industry[0].industry_name].x += nodes[i].x
-                    topIndustry[obj.response.industries.industry[0].industry_name].y += nodes[i].y
-                }
-
-                for (var i = 0; i < Object.keys(topIndustry).length; i++) {
-                    cIndustry = topIndustry[Object.keys(topIndustry)[i]]
-                    total = cIndustry.yes + cIndustry.no + cIndustry.none
-                    if (!(cIndustry.yes / total > .5 || cIndustry.no / total > .5 || cIndustry.none / total > .5)) {
-                        delete topIndustry[Object.keys(topIndustry)[i]]
-                    } else {
-                        var cVal = '#f00'
-                        if (cIndustry.yes / total > .5) {
-                            cVal = '#0f0'
-                        } else if (cIndustry.none / total > .5) {
-                            cVal = '#222'
-                        }
-                        nodes.push({ id: topIndustry[Object.keys(topIndustry)[i]], label: topIndustry[Object.keys(topIndustry)[i]], color: cVal, size: 1, x: cIndustry.x/total, y: cIndustry.y/total}) //todo should change size
-                    }
-                }
+                party[info.party].memberid.push(info.member_id)
                 
-                resolve(topIndustry)
-            }).then(function(value) {
-                fs.writeFile('./public/data/nodes.json', JSON.stringify(nodes), function (err) {
-                    if (err) throw err;
-                });
-            })
+                if (info.vote_position == 'Yes') {
+                    party[info.party].yes++
+                } else if (info.vote_position == 'No') {
+                    party[info.party].no++
+                } else {
+                    party[info.party].none++
+                }
 
-            //res.send(nodes)
+                if(info.party == 'R') {
+                    cVal = '#ff3333'
+                } else if (info.party == 'D') {
+                    cVal = '#3333ff'
+                }
+
+                var angle = 2*i*Math.PI/sortedResp.length
+
+                x = Math.cos(angle)
+                y = Math.sin(angle)
+
+                party[info.party].x += x
+                party[info.party].y += y
+                //coloring needs to reflect vote not party
+                nodes.push({id: info.member_id, label: info.name, color: cVal, size: 1, x: x, y: y})
+            }
+             
+            //make the special interest nodes (parties, donors)
+            var topIndustry = {}
+            for (var i = 0; i < nodes.length; i++) {
+                var obj = JSON.parse(fs.readFileSync('./persistentdata/' + nodes[i].id + '.' + req.params.congress +'.json', 'utf8'));
+                
+                var response = sortedResp[i].vote_position;
+
+                if(typeof obj.response === 'undefined') {
+                    continue
+                }
+
+                var key = obj.response.industries.industry[0]['@attributes'].industry_name
+                if (typeof topIndustry[key] === 'undefined') {
+                    topIndustry[key] = {}
+                    topIndustry[key].name = key 
+                    topIndustry[key].yes = 0
+                    topIndustry[key].no = 0
+                    topIndustry[key].none = 0
+                    topIndustry[key].x = 0
+                    topIndustry[key].y = 0
+                    topIndustry[key].memberid = []
+                }
+
+                if(response == 'Yes') {
+                    topIndustry[key].yes++
+                } else if (response == 'No') {
+                    topIndustry[key].no++
+                } else {
+                    topIndustry[key].none++
+                }
+
+                topIndustry[key].x += nodes[i].x
+                topIndustry[key].y += nodes[i].y
+
+                topIndustry[key].memberid.push(obj.id)
+            }
+
+            nodes.push({ id: 'main', label: 'bill', color: '#fff', x: 0, y: 0, size: 3 })
+            nodes.push({ id: 'main1', label: 'bill', color: '#000', x: 1, y: 0, size: 3 })
+            nodes.push({ id: 'main2', label: 'bill', color: '#000', x: 0, y: 1, size: 3 })
+            nodes.push({ id: 'main3', label: 'bill', color: '#000', x: -1, y: 0, size: 3 })
+            nodes.push({ id: 'main4', label: 'bill', color: '#000', x: 0, y: -1, size: 3 })
+
+            //add party nodes
+            for(var i = 0; i < Object.keys(party).length; i++) {
+                var current = party[Object.keys(party)[i]] 
+                var total = current.yes + current.no + current.none
+
+                if(current.yes/total > .5) {
+                    party[Object.keys(party)[i]].vote = 'Yes'
+                } else if (current.no / total > .5) {
+                    party[Object.keys(party)[i]].vote = 'No'
+                } else if (current.none / total > .5) {
+                    party[Object.keys(party)[i]].vote = 'Note Voting'
+                } else {
+                    delete party[Object.keys(party)[i]]
+                    continue
+                }
+
+                cVal = '#ffff00'
+                if (Object.keys(party)[i] == 'R') {
+                    cVal = '#ff0000'
+                } else if (Object.keys(party)[i] == 'D') {
+                    cVal = '#0000ff'
+                }
+                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 2, x: current.x / total, y: current.y / total }) //todo should change size
+            }
+
+            //add industry nodes
+            for (var i = 0; i < Object.keys(topIndustry).length; i++) {
+                cIndustry = topIndustry[Object.keys(topIndustry)[i]]
+                total = cIndustry.yes + cIndustry.no + cIndustry.none
+
+                if (total<2||!(cIndustry.yes / total > .5 || cIndustry.no / total > .5 || cIndustry.none / total > .5)){//} || total < 2) {
+                    delete topIndustry[Object.keys(topIndustry)[i]]
+                    i--
+                    continue
+                } else {
+                    topIndustry[Object.keys(topIndustry)[i]].vote = 'No'
+                    if (cIndustry.yes / total > .5) {
+                        topIndustry[Object.keys(topIndustry)[i]].vote = 'Yes'
+                    } else if (cIndustry.none / total > .5) {
+                        topIndustry[Object.keys(topIndustry)[i]].vote = 'Not Voting'
+                    }
+                    var x = cIndustry.x / total
+                    var y = cIndustry.y / total
+                    //var angle = Math.atan(y/x)
+                    /*if(Math.sqrt(Math.pow(Math.cos(angle)-x, 2)+Math.pow(Math.sin(angle)-y, 2)) < .1) {
+                    console.log(Object.keys(topIndustry)[i], x, y, -Math.cos(angle) * .1 * (Math.abs(x) / x), -Math.sin(angle) * .1 * (Math.abs(y) / y))
+                        x += -Math.cos(angle)*.1*(Math.abs(x)/x)
+                       y += -Math.sin(angle) * .1 * (Math.abs(y) / y)
+                        console.log(x,y)
+                   } */                   
+                    nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: '#009933', size: 2, x: x, y: y}) //todo should change size
+                }
+            }
+
+            //members to industry
+            for (var i = 0; i < Object.keys(topIndustry).length; i++) {
+                currentIndustry = topIndustry[Object.keys(topIndustry)[i]].memberid
+                for(var a = 0; a < currentIndustry.length; a++) {  
+                    if (members[currentIndustry[a]].vote == topIndustry[Object.keys(topIndustry)[i]].vote) {    
+                        members[currentIndustry[a]].voteShown = true
+                        edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: '#00b33c'})
+                    }
+                }
+            }
+
+            //industry to center
+            for (var i = 0; i < Object.keys(topIndustry).length; i++) {
+                var cVal = '#f00'
+                if (topIndustry[Object.keys(topIndustry)[i]].vote == 'Yes') {
+                    cVal = '#0f0'
+                } else if (topIndustry[Object.keys(topIndustry)[i]].vote == 'Not Voting') {
+                    continue
+                }
+                edges.push({ id: 'e' + Object.keys(topIndustry)[i] + '.main', target: 'main', source: Object.keys(topIndustry)[i], color: cVal })
+            }
+
+            //members to party
+            for (var i = 0; i < Object.keys(party).length; i++) {
+                currentIndustry = party[Object.keys(party)[i]].memberid
+                
+                cVal = '#ffff80'
+                if (Object.keys(party)[i] == 'D') {
+                    cVal = '#99b3ff'
+                } else if (Object.keys(party)[i] == 'R') {
+                    cVal = '#ff8080'
+                }
+
+                for (var a = 0; a < currentIndustry.length; a++) {
+                    if (members[currentIndustry[a]].vote == party[Object.keys(party)[i]].vote && members[currentIndustry[a]].voteShown == false) {               
+                        members[currentIndustry[a]].voteShown = true
+                        edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(party)[i], source: currentIndustry[a], target: Object.keys(party)[i], color: cVal})
+                    }
+                }
+            }
+
+            //party to center
+            for (var i = 0; i < Object.keys(party).length; i++) {
+                var cVal = '#f00'
+                if (party[Object.keys(party)[i]].vote == 'Yes') {
+                    cVal = '#0f0'
+                } else if (party[Object.keys(party)[i]].vote == 'Not Voting') {
+                    continue
+                }
+                edges.push({ id: 'e' + Object.keys(party)[i] + '.main', target: 'main', source: Object.keys(party)[i], color: cVal })
+            }
+
+            //need to do party to center
+            //members to center
+            for (var i = 0; i < Object.keys(members).length; i++) {
+                current = members[Object.keys(members)[i]]
+                if(!current.voteShown && current.vote != "Not Voting") {
+                    var cVal = '#f00'
+                    if (current.vote == 'Yes') {
+                        cVal = '#0f0'
+                    } else if (current.vote == 'None') {
+                        cVal = '#222'
+                    }
+                    edges.push({ id: 'e' + Object.keys(members)[i] + '.main', target: 'main', source: Object.keys(members)[i], color: cVal })
+                }
+            }
+        }).then(function(value) {
+            solution = { "nodes": nodes, "edges": edges }
+            fs.writeFile('./public/data/nodes.json', JSON.stringify(solution), function (err) {
+                if (err) throw err;
+            });
+
+            console.log('loading the file.....')
+            res.redirect('../../../graph.html')
         })
-        //res.send(value)
-        res.redirect('../../../graph.html')
     })
 })
 
@@ -118,7 +264,6 @@ function recieveData(congress) {
     var firstS = ppc.getMemberList('senate', congress)
     var overall = {}
     Promise.all([first, firstS]).then(function (valAr) {
-        console.log('1')
         for (var a = 0; a < valAr.length; a++) {
             value = valAr[a].results['0'].members
             for (var i = 0; i < value.length; i++) {               
@@ -126,9 +271,7 @@ function recieveData(congress) {
             }
         }
     }).then(function (value) {
-        console.log('2')
         for (var i = 0; i < Object.keys(overall).length; i++) {
-            console.log(overall[Object.keys(overall)[i]].id)
             writingCallback(i, overall[Object.keys(overall)[i]], congress)
         }
     })
