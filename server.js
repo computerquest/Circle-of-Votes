@@ -107,11 +107,11 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 topIndustry[key].memberid.push(obj.id)
             }
 
-            nodes.push({ id: 'main', label: 'bill', color: '#fff', x: 0, y: 0, size: 3 })
-            nodes.push({ id: 'main1', label: 'bill', color: '#000', x: 1, y: 0, size: 3 })
-            nodes.push({ id: 'main2', label: 'bill', color: '#000', x: 0, y: 1, size: 3 })
-            nodes.push({ id: 'main3', label: 'bill', color: '#000', x: -1, y: 0, size: 3 })
-            nodes.push({ id: 'main4', label: 'bill', color: '#000', x: 0, y: -1, size: 3 })
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 3, color: ((resp.results.votes.vote.result == 'Motion Rejected')? '#f00': '#0f0')})
+            //nodes.push({ id: 'main1', label: 'bill', color: '#000', x: 1, y: 0, size: 3 })
+            //nodes.push({ id: 'main2', label: 'bill', color: '#000', x: 0, y: 1, size: 3 })
+            //nodes.push({ id: 'main3', label: 'bill', color: '#000', x: -1, y: 0, size: 3 })
+            //nodes.push({ id: 'main4', label: 'bill', color: '#000', x: 0, y: -1, size: 3 })
 
             //add party nodes
             for(var i = 0; i < Object.keys(party).length; i++) {
