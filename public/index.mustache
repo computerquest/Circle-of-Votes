@@ -1,18 +1,43 @@
 <html>
 <head>
 <title>Main</title>
-</head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
+</head>
 <body style="padding: 0px; margin: 0px;">
+    <nav class="navbar navbar-light bg-light justify-content-between">
+        <a class="navbar-brand"><span style='color:#ff1a1a'>Circle</span> of <span style='color:#00e600;'>Vote<span style='font-size: 15px'>$</span></span></a>
+        <form class="form-inline">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" id='search'>
+            <button id="button" class="btn btn-outline-dark my-2 my-sm-0" onclick="click">Search</button>
+        </form>
+    </nav>
     {{#bills}}
-        <div>
-            <a href="{{link}}"><h2>{{name}}</h2></a>
-            <div style="margin-right: 5%">
-                <p>Summary: {{summary}}</p>
-                <p>Last Action: {{lastDate}}</p>
-                <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
+        <div class='card border-black' style='margin-bottom: 1%; margin-left:1%; margin-right: 1%;'>
+            <h5 class='card-header'>{{slug}}</h5>
+            <div class='card-body'>
+                <h5 class='card-title'>{{name}}</h5>
+                <div class='card-text'>
+                    <p>Summary: {{{summary}}}</p>
+                    <p>Last Action: {{lastDate}}</p>
+                    <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
+                </div>
+                <a href='{{link}}' class='btn btn-primary'>See details</a>
             </div>
         </div>
     {{/bills}}
 </body>
+
+<script>
+$('#button').click(function() {
+    alert(encodeURIComponent($('#search').val()))
+    console.log('click ',encodeURIComponent($('#search').val()))
+    window.location.replace('http://localhost:3000/search/'+encodeURIComponent($('#search').val()))
+    return false
+})
+</script>
 </html>

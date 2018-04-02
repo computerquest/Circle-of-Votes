@@ -1,27 +1,55 @@
+<html>
+<head>
+<title>{{name}}</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+
+<body>
+<nav class="navbar navbar-light bg-light justify-content-between">
+    <a class="navbar-brand"><span style='color:#ff1a1a'>Circle</span> of <span style='color:#00e600;'>Vote<span style='font-size: 15px'>$</span></span></a>
+    <form class="form-inline">
+        <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+        <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Search</button>
+    </form>
+</nav>
 <div>
-    <h2>{{name}}</h2>
-    <div style="margin-right: 5%">
-        <p>{{summary}}</p>
-        <p>{{lastDate}}</p>
+    <h1 style='margin: 2%'>{{name}}</h1>
+    <div style="margin-left: 5%">
+        <h3>Summary:</h3>
+        <p style='margin-left: 5%'>{{summary}}</p>
+        <p>Last Action: {{lastDate}}</p>
         <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
         <h3>Action:</h3>
         {{#actions}}
-            <div style="margin-right: 5%">
-                <p>{{date}}</p>
-                <p>{{chamber}}</p>
-                <p>{{type}}</p>
-                <p>{{description}}</p>
+            <div class='card' style='margin-bottom: 1%; margin-left: 5%'>
+                <h5 class='card-header'>{{chamber}}</h5>
+                <div class='card-body'>
+                    <h5 class='card-title'>{{type}}</h5>
+                    <div class='card-text'>
+                        <p>{{date}}</p>                    
+                        <p>{{description}}</p>
+                    </div>
+                </div>
             </div>
         {{/actions}}
         <h3>Votes:</h3>
         {{#vote}}
-            <div style="margin-right: 5%">
-                <p>{{date}}</p>
-                <p>{{chamber}}</p>
-                <p>{{question}}</p>
-                <p>{{result}}</p>
-                <a href="{{link}}">View Graph</a>
+            <div class='card {{#pass}}text-white bg-success{{/pass}} {{#fail}}text-white bg-danger{{/fail}}' style='margin-botton: 1%; margin-left: 5%'>
+                <h5 class='card-header'>{{chamber}}</h5>
+                <div class='card-body'>
+                    <h5 class='card-title'>{{result}}</p>
+                    <div class='card-text'>
+                        <p>{{date}}</p>                    
+                        <p>{{question}}</p> 
+                        <a href="{{link}}" class="btn btn-primary">View Graph</a>
+                    </div>
+                </div>
             </div>
         {{/vote}}
     </div>
 </div>
+</body>
+</html>

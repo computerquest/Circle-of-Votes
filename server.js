@@ -22,6 +22,23 @@ app.use(express.static('public'))
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))
 
+app.get('/search/:query', function(req, res) {
+    //res.setHeader('Content-Type', 'text/html')
+    res.setHeader('Content-Type', 'application/json')
+    console.log('searching with ', req.params.query)
+    ppc.billQuery(req.params.query).then(function (val) {
+        console.log(val)
+        submit = { bills: [] }
+        goodStuff = val.results[0].bills
+        //console.log(goodStuff)
+        for (i = 0; i < goodStuff.length; i++) {
+            submit.bills.push({ slug: goodStuff[i].bill_slug, link: '../billinfo/' + goodStuff[i].bill_slug, name: goodStuff[i].short_title, summary: goodStuff[i].summary_short, lastDate: goodStuff[i].latest_major_action_date, housePass: goodStuff[i].house_passage, senatePass: goodStuff[i].senate_passage })
+        }
+        res.send(val)
+        //res.render('index.mustache', submit)
+    })
+})
+
 app.get('/home/:chamber', function(req, res) {
     res.setHeader('Content-Type', 'text/html')
     ppc.getRecentBills(req.params.chamber, 'passed').then(function(val) {
@@ -29,7 +46,7 @@ app.get('/home/:chamber', function(req, res) {
         goodStuff = val.results[0].bills
 
         for(i = 0; i < goodStuff.length; i++) {
-            submit.bills.push({ link: '../billinfo/' + goodStuff[i].bill_slug, name: goodStuff[i].short_title, summary: goodStuff[i].summary_short, lastDate: goodStuff[i].latest_major_action_date, housePass: goodStuff[i].house_passage, senatePass: goodStuff[i].senate_passage})
+            submit.bills.push({ slug: goodStuff[i].bill_slug, link: '../billinfo/' + goodStuff[i].bill_slug, name: goodStuff[i].short_title, summary: goodStuff[i].summary_short, lastDate: goodStuff[i].latest_major_action_date, housePass: goodStuff[i].house_passage, senatePass: goodStuff[i].senate_passage})
         }
         res.render('index.mustache', submit)
     })
@@ -46,7 +63,7 @@ app.get('/billinfo/:billId', function (req, res) {
         }
         for (var i = 0; i < val.votes.length; i++) {
             console.log('sending the votes')
-            submit.vote.push({ date: val.votes[i].date, chamber: val.votes[i].chamber, question: val.votes[i].question, result: val.votes[i].result, link: '../../graphs/' + val.congress + '/' + val.bill_slug + '/' + i})
+            submit.vote.push({fail: ((val.votes[i].result == 'Passed')? false: true), pass: ((val.votes[i].result == 'Passed')? true: false), date: val.votes[i].date, chamber: val.votes[i].chamber, question: val.votes[i].question, result: val.votes[i].result, link: '../../graphs/' + val.congress + '/' + val.bill_slug + '/' + i})
         }
         res.render('billinfo.mustache', submit)
     })
