@@ -22,6 +22,35 @@ app.use(express.static('public'))
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))
 
+app.get('/home/:chamber', function(req, res) {
+    res.setHeader('Content-Type', 'text/html')
+    ppc.getRecentBills(req.params.chamber, 'passed').then(function(val) {
+        submit = {bills:[]}
+        goodStuff = val.results[0].bills
+
+        for(i = 0; i < goodStuff.length; i++) {
+            submit.bills.push({ link: '../billinfo/' + goodStuff[i].bill_slug, name: goodStuff[i].short_title, summary: goodStuff[i].summary_short, lastDate: goodStuff[i].latest_major_action_date, housePass: goodStuff[i].house_passage, senatePass: goodStuff[i].senate_passage})
+        }
+        res.render('index.mustache', submit)
+    })
+})
+
+app.get('/billinfo/:billId', function (req, res) {
+    res.setHeader('Content-Type', 'text/html')
+    ppc.getBill(req.params.billId).then(function (val) {
+        val = val.results[0]
+
+        submit = {name: val.short_title, summary: val.summary, lastDate: val.latest_major_action_date, senatePass: val.senate_passage, housePass: val.house_passage, actions:[], vote:[]}
+        for(var i = 0; i < val.actions.length; i++) {
+            submit.actions.push({ date: val.actions[i].datetime, chamber: val.actions[i].chamber, type: val.actions[i].action_type, description: val.actions[i].description})
+        }
+        for (var i = 0; i < val.votes.length; i++) {
+            console.log('sending the votes')
+            submit.vote.push({ date: val.votes[i].date, chamber: val.votes[i].chamber, question: val.votes[i].question, result: val.votes[i].result, link: '../../graphs/' + val.congress + '/' + val.bill_slug + '/' + i})
+        }
+        res.render('billinfo.mustache', submit)
+    })
+})
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     console.log('starting')
     res.setHeader('Content-Type', 'text/html')
@@ -143,9 +172,9 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
 
                 cVal = '#ffff00'
                 if (Object.keys(party)[i] == 'R') {
-                    cVal = '#ff0000'
+                    cVal = '#e60000'
                 } else if (Object.keys(party)[i] == 'D') {
-                    cVal = '#0000ff'
+                    cVal = '#0000e6'
                 }
                 nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 2, x: current.x / total, y: current.y / total }) //todo should change size
             }
@@ -185,16 +214,24 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 for(var a = 0; a < currentIndustry.length; a++) {  
                     if (members[currentIndustry[a]].vote == topIndustry[Object.keys(topIndustry)[i]].vote) {    
                         members[currentIndustry[a]].voteShown = true
-                        edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: '#00b33c'})
+                        
+                        cVal = '#ffff80'
+                        if (members[currentIndustry[a]].party == 'D') {
+                            cVal = '#99b3ff'
+                        } else if (members[currentIndustry[a]].party == 'R') {
+                            cVal = '#ff8080'
+                        }
+
+                        edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: cVal})
                     }
                 }
             }
 
             //industry to center
             for (var i = 0; i < Object.keys(topIndustry).length; i++) {
-                var cVal = '#f00'
+                var cVal = '#ff0000'
                 if (topIndustry[Object.keys(topIndustry)[i]].vote == 'Yes') {
-                    cVal = '#0f0'
+                    cVal = '#00ff00'
                 } else if (topIndustry[Object.keys(topIndustry)[i]].vote == 'Not Voting') {
                     continue
                 }
@@ -222,9 +259,9 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
 
             //party to center
             for (var i = 0; i < Object.keys(party).length; i++) {
-                var cVal = '#f00'
+                var cVal = '#ff0000'
                 if (party[Object.keys(party)[i]].vote == 'Yes') {
-                    cVal = '#0f0'
+                    cVal = '#00ff00'
                 } else if (party[Object.keys(party)[i]].vote == 'Not Voting') {
                     continue
                 }
@@ -236,11 +273,11 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             for (var i = 0; i < Object.keys(members).length; i++) {
                 current = members[Object.keys(members)[i]]
                 if(!current.voteShown && current.vote != "Not Voting") {
-                    var cVal = '#f00'
+                    var cVal = '#ff0000'
                     if (current.vote == 'Yes') {
-                        cVal = '#0f0'
+                        cVal = '#00ff00'
                     } else if (current.vote == 'None') {
-                        cVal = '#222'
+                        continue
                     }
                     edges.push({ id: 'e' + Object.keys(members)[i] + '.main', target: 'main', source: Object.keys(members)[i], color: cVal })
                 }
@@ -283,7 +320,7 @@ function recieveData(congress) {
     })
 }
 function writingCallback(pos, overallData, congress) {
-    var localClient = new OpenSecretsClient(opKeys[pos%8]);
+    var localClient = new OpenSecretsClient(opKeys[pos%9]);
     console.log('crp_id '+ overallData.crp_id)
 
     var year = 2018
@@ -305,13 +342,12 @@ function writingCallback(pos, overallData, congress) {
         } else {
             console.log('bad id was '+ overallData.id +' crp: '+ overallData.crp_id)
         } 
-        
+
         fs.writeFile('./persistentdata/' + overallData.id + '.' + congress + '.json', JSON.stringify(overallData), function (err) {
             if (err) throw err;
         });
+        console.log('finished process')
     })
-
-    console.log('finished process')
 }
 
 function verifiedJSON(val) {
@@ -319,7 +355,7 @@ function verifiedJSON(val) {
     try {
         a = JSON.parse(val);
     } catch (e) {
-        console.log('caught'); // error in the above string (in this case, yes)!
+        console.log('caught ' + a); // error in the above string (in this case, yes)!
         a = {bad:true}
     } finally {
         return a
