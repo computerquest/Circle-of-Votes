@@ -73,10 +73,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     res.setHeader('Content-Type', 'text/html')
     ppc.getBill(req.params.bill, req.params.congress).then(function (value) {
         console.log('bil')
-        fs.writeFile('./public/data/billinfo.json', JSON.stringify(value), function (err) {
-            if (err) throw err;
-        });
-
         console.log(req.url)
 
         var str = ''+value.results[0].votes[req.params.vote].api_url;
@@ -131,7 +127,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             //make the special interest nodes (parties, donors)
             var topIndustry = {}
             for (var i = 0; i < nodes.length; i++) {
-                var obj = JSON.parse(fs.readFileSync('./persistentdata/' + nodes[i].id + '.' + req.params.congress +'.json', 'utf8'));
+                var obj = JSON.parse(fs.readFileSync('./app/persistentdata/' + nodes[i].id + '.' + req.params.congress +'.json', 'utf8'));
                 
                 var response = sortedResp[i].vote_position;
 
