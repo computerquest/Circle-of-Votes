@@ -9,8 +9,13 @@
 </head>
 
 <body>
-<nav class="navbar navbar-light bg-light justify-content-between">
-        <a class="navbar-brand"><span style='color:#ff1a1a'>Circle</span> of <span style='color:#00e600;'>Vote<span style='font-size: 15px'>$</span></span></a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a href='/home' class="navbar-brand"><span style='color:#ff1a1a'>Circle</span> of <span style='color:#00e600;'>Vote<span style='font-size: 15px'>$</span></span></a>
+        <div class="collapsem navbar-collapse" id="navbarNav">
+            <ul class='navbar-nav'>
+                <li class='nav-item'><a href='/about' class='nav-link'>About</a></li>
+            </ul>
+        </div>
         <form class="form-inline">
             <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" id='search'>
             <button id="button" class="btn btn-outline-dark my-2 my-sm-0" onclick="click">Search</button>
@@ -25,7 +30,8 @@
         <p style='margin-left: 5%'>{{lastDate}}</p>
         <h3>Pass:</h3>
         <div style='margin-left: 5%'>
-            <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
+            {{#actionShow}}<p>Senate: {{senatePass}} and House: {{housePass}}</p>{{/actionShow}}
+            {{^actionShow}}<p>Has not been passed</p>{{/actionShow}}
         </div>
         {{#actionPresent}}
         <h3>Action:</h3>

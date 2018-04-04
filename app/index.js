@@ -11,13 +11,18 @@ const request = require('request');
 const app = express()
 app.set('view engine', 'mustache')
 app.engine('mustache', mustacheExpress());
-app.set('views', __dirname + '/public'); // you can change '/views' to '/public',
+app.set('views', __dirname + '/public');
 var clientO = new OpenSecretsClient('8fad4c535bd7763204689b57c70137fd'); //the json values are returned as a string
 
 var opKeys = ['8fad4c535bd7763204689b57c70137fd', 'd54dbd5a4f572862c2609aab9487a365', 'f8cea77db428d13c088ac8afff35e519', 'be091217e1dd3b340e2511e38699efa7', 'db37558aa3f970cadfb8345c26d1dde6','5928e99d96fac2a30906a126a293714d', '1ad00b500ae4d8a0a3333c7e1689eebb', 'c29969ede23d4f4871205c97548a8290', '2d87571b3707af874843d8e9f3391666']
 
 app.use(express.static('public'))
 app.listen(9000, () => console.log('Example app listening on port 3000!'))
+
+app.get('/about', function(req, res) {
+    res.setHeader('Content-Type', 'text/html')
+    res.sendFile(__dirname+'/public/about.html')
+})
 
 app.get('/search/:query', function(req, res) {
     request({ url: 'https://api.propublica.org/congress/v1/bills/search.json?query='+req.params.query+'&sort=_score', headers: { 'X-API-Key': 'CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF' } }, function (err, lRes, body) {
@@ -38,24 +43,15 @@ app.get('/home', function(req, res) {
         res.setHeader('Content-Type', 'text/html')   
         submit = { bills: [] }
         body = JSON.parse(body)
+        console.log(body)
         goodStuff = body.results.votes
         for (i = 0; i < goodStuff.length; i++) {
             var str = goodStuff[i].bill.bill_id
             var arr = str.split("-")
-            submit.bills.push({ slug: arr[0], link: '../billinfo/' + arr[0], name: goodStuff[i].bill.title, summary: goodStuff[i].description, lastDate: goodStuff[i].bill.latest_action})
+            submit.bills.push({singleVote: true, pass:((goodStuff[i].result.includes('Pass') || goodStuff[i].result.includes('Agreed'))? true:false),result: goodStuff[i].result, slug:goodStuff[i].chamber+' | '+ arr[0], link: '../billinfo/' + arr[0], name: goodStuff[i].bill.title, summary: ((goodStuff[i].description=='')? 'None provided':goodStuff[i].description), lastDate: ((null==goodStuff[i].bill.latest_action)? 'None provided':goodStuff[i].bill.latest_action)})
         }
         res.render('index.mustache', submit)
     })
-
-    /*ppc.getRecentBills(req.params.chamber, 'passed').then(function(val) {
-        submit = {bills:[]}
-        goodStuff = val.results[0].bills
-
-        for(i = 0; i < goodStuff.length; i++) {
-            submit.bills.push({ slug: goodStuff[i].bill_slug, link: '../billinfo/' + goodStuff[i].bill_slug, name: goodStuff[i].short_title, summary: goodStuff[i].summary_short, lastDate: goodStuff[i].latest_major_action_date, housePass: goodStuff[i].house_passage, senatePass: goodStuff[i].senate_passage})
-        }
-        res.render('index.mustache', submit)
-    })*/
 })
 
 app.get('/home/:chamber', function (req, res) {
@@ -64,23 +60,24 @@ app.get('/home/:chamber', function (req, res) {
 
 app.get('/billinfo/:billId', function (req, res) {
     res.setHeader('Content-Type', 'text/html')
-    ppc.getBill(req.params.billId).then(function (val) {
+    p = ppc.getBill(req.params.billId).then(function (val) {
         if(typeof val.results === 'undefined') {
             res.sendFile(__dirname+'/public/error.html')
             return
         }
         
         val = val.results[0]
-        
-        submit = {name: val.short_title, votePresent: ((val.votes.length > 0)? true: false), actionPresent: ((val.actions.length > 0)? true: false),summary: val.summary, lastDate: val.latest_major_action_date, senatePass: val.senate_passage, housePass: val.house_passage, actions:[], vote:[]}
+        submit = {actionShow: val.senate_passage || val.house_passage, name: val.short_title, votePresent: ((val.votes.length > 0)? true: false), actionPresent: ((val.actions.length > 0)? true: false),summary: val.summary, lastDate: val.latest_major_action_date, senatePass: ((val.senate_passage==null)? 'not passed':val.senate_passage), housePass: ((val.house_passage==null)? 'not passed': val.house_passage), actions:[], vote:[]}
         for(var i = 0; i < val.actions.length; i++) {
             submit.actions.push({ date: val.actions[i].datetime, chamber: val.actions[i].chamber, type: val.actions[i].action_type, description: val.actions[i].description})
         }
         for (var i = 0; i < val.votes.length; i++) {
-            console.log('sending the votes')
             submit.vote.push({fail: ((val.votes[i].result == 'Passed')? false: true), pass: ((val.votes[i].result == 'Passed')? true: false), date: val.votes[i].date, chamber: val.votes[i].chamber, question: val.votes[i].question, result: val.votes[i].result, link: '../../graphs/' + val.congress + '/' + val.bill_slug + '/' + i})
         }
         res.render('billinfo.mustache', submit)
+    })
+    p.catch(function(val) {
+        res.sendFile(__dirname+'/public/error.html')
     })
 })
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
