@@ -52,7 +52,7 @@
         <h3>Votes:</h3>
         {{/votePresent}}
         {{#vote}}
-            <div class='card {{#pass}}text-white bg-success{{/pass}} {{#fail}}text-white bg-danger{{/fail}}' style='margin-botton: 1%; margin-left: 5%'>
+            <div class='card {{#pass}}text-white bg-success{{/pass}} {{^pass}}text-white bg-danger{{/pass}}' style='margin-botton: 1%; margin-left: 5%'>
                 <h5 class='card-header'>{{chamber}}</h5>
                 <div class='card-body'>
                     <h5 class='card-title'>{{result}}</p>

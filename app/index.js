@@ -43,7 +43,6 @@ app.get('/home', function(req, res) {
         res.setHeader('Content-Type', 'text/html')   
         submit = { bills: [] }
         body = JSON.parse(body)
-        console.log(body)
         goodStuff = body.results.votes
         for (i = 0; i < goodStuff.length; i++) {
             var str = goodStuff[i].bill.bill_id
@@ -72,7 +71,7 @@ app.get('/billinfo/:billId', function (req, res) {
             submit.actions.push({ date: val.actions[i].datetime, chamber: val.actions[i].chamber, type: val.actions[i].action_type, description: val.actions[i].description})
         }
         for (var i = 0; i < val.votes.length; i++) {
-            submit.vote.push({fail: ((val.votes[i].result == 'Passed')? false: true), pass: ((val.votes[i].result == 'Passed')? true: false), date: val.votes[i].date, chamber: val.votes[i].chamber, question: val.votes[i].question, result: val.votes[i].result, link: '../../graphs/' + val.congress + '/' + val.bill_slug + '/' + i})
+            submit.vote.push({pass: ((val.votes[i].result == 'Passed' | val.votes[i].result.includes('Agreed'))? true: false), date: val.votes[i].date, chamber: val.votes[i].chamber, question: val.votes[i].question, result: val.votes[i].result, link: '../../graphs/' + val.congress + '/' + val.bill_slug + '/' + i})
         }
         res.render('billinfo.mustache', submit)
     })
@@ -216,7 +215,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 topIndustry[key].memberid.push(obj.id)
             }
 
-            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 3, color: ((resp.results.votes.vote.result == 'Motion Rejected')? '#f00': '#0f0')})
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 3, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0')})
 
             //add party nodes
             for(var i = 0; i < Object.keys(party).length; i++) {

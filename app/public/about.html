@@ -31,4 +31,10 @@
         </div>
     </div>
 </body>
+<script>
+    $('#button').click(function() {
+        window.location.replace('/search/'+encodeURIComponent($('#search').val()))
+        return false
+    })
+</script>
 </html>
