@@ -87,9 +87,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     console.log('starting')
     res.setHeader('Content-Type', 'text/html')
     ppc.getBill(req.params.bill, req.params.congress).then(function (value) {
-        console.log('bil')
-        console.log(req.url)
-
         var str = ''+value.results[0].votes[req.params.vote].api_url;
         console.log(str)
         var arr = str.split("/");
@@ -97,18 +94,16 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
         var edges = []
         var members = {}
         ppc.getRollCallVotes(arr[6], arr[8], arr[10].replace('.json', ''), arr[5]).then(function(resp){
-            console.log('votes')
             //sort nodes by parties
             var sortedResp = resp.results.votes.vote.positions.sort(function(a, b) {
                 return a.party.charCodeAt(0)-b.party.charCodeAt(0);
             })       
-            
             //puts all of the members of congress in the circular formation and sets up the basic node
             var party = {}
             for(var i = 0; i < sortedResp.length; i++) {
                 var info = sortedResp[i]
                 var cVal = '#ffff33'
-                members[info.member_id] = { vote: info.vote_position, party: info.party, voteShown: false }
+                members[info.member_id] = {name: info.name, vote: info.vote_position, party: info.party, voteShown: false }
                 if(typeof party[info.party] === 'undefined') {
                     party[info.party] = {x: 0, y: 0, memberid:[], name: info.party, yes: 0, no: 0, none: 0}
                 }
@@ -169,12 +164,14 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                                 vote = 'No'
                             }
 
-                            a = { party: current.party[0], id: current.first_name + ' ' + current.last_name, vote: vote }
+                            a = { party: current.party[0], name: current.first_name + ' ' + current.last_name, vote: vote }
 
                             works = false
                             for (i = 0; i < Object.keys(members).length; i++) {
-                                if (a.name == members[Object.keys(members)[i]] && a.vote == members[Object.keys(members)[i]].vote) {
+                                if (a.name == members[Object.keys(members)[i]].name && a.vote == members[Object.keys(members)[i]].vote) {
                                     works = true
+                                } else if (a.name == members[Object.keys(members)[i]].name) {
+                                    console.log(members[Object.keys(members)[i]])
                                 }
                             }
 
@@ -234,9 +231,10 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else if (current.no / total > .5) {
                     party[Object.keys(party)[i]].vote = 'No'
                 } else if (current.none / total > .5) {
-                    party[Object.keys(party)[i]].vote = 'Note Voting'
+                    party[Object.keys(party)[i]].vote = 'Not Voting'
                 } else {
                     delete party[Object.keys(party)[i]]
+                    i--
                     continue
                 }
 
@@ -293,7 +291,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                         } else if (members[currentIndustry[a]].party == 'R') {
                             cVal = '#ff8080'
                         }
-
                         edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: cVal})
                     }
                 }
@@ -351,6 +348,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     } else if (current.vote == 'None') {
                         continue
                     }
+
                     edges.push({ id: 'e' + Object.keys(members)[i] + '.main', target: 'main', source: Object.keys(members)[i], color: cVal })
                 }
             }
