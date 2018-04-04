@@ -72,7 +72,7 @@ app.get('/billinfo/:billId', function (req, res) {
         
         val = val.results[0]
         
-        submit = {name: val.short_title, summary: val.summary, lastDate: val.latest_major_action_date, senatePass: val.senate_passage, housePass: val.house_passage, actions:[], vote:[]}
+        submit = {name: val.short_title, votePresent: ((val.votes.length > 0)? true: false), actionPresent: ((val.actions.length > 0)? true: false),summary: val.summary, lastDate: val.latest_major_action_date, senatePass: val.senate_passage, housePass: val.house_passage, actions:[], vote:[]}
         for(var i = 0; i < val.actions.length; i++) {
             submit.actions.push({ date: val.actions[i].datetime, chamber: val.actions[i].chamber, type: val.actions[i].action_type, description: val.actions[i].description})
         }

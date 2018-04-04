@@ -1,6 +1,7 @@
 <html>
 <head>
 <title>{{name}}</title>
+<!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <!-- Latest compiled and minified JavaScript -->
@@ -9,20 +10,26 @@
 
 <body>
 <nav class="navbar navbar-light bg-light justify-content-between">
-    <a class="navbar-brand"><span style='color:#ff1a1a'>Circle</span> of <span style='color:#00e600;'>Vote<span style='font-size: 15px'>$</span></span></a>
-    <form class="form-inline">
-        <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-        <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Search</button>
-    </form>
-</nav>
-<div>
+        <a class="navbar-brand"><span style='color:#ff1a1a'>Circle</span> of <span style='color:#00e600;'>Vote<span style='font-size: 15px'>$</span></span></a>
+        <form class="form-inline">
+            <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search" id='search'>
+            <button id="button" class="btn btn-outline-dark my-2 my-sm-0" onclick="click">Search</button>
+        </form>
+    </nav>
+<div style='margin-right: 2%'>
     <h1 style='margin: 2%'>{{name}}</h1>
     <div style="margin-left: 5%">
         <h3>Summary:</h3>
         <p style='margin-left: 5%'>{{summary}}</p>
-        <p>Last Action: {{lastDate}}</p>
-        <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
+        <h3>Last Action:</h3>
+        <p style='margin-left: 5%'>{{lastDate}}</p>
+        <h3>Pass:</h3>
+        <div style='margin-left: 5%'>
+            <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
+        </div>
+        {{#actionPresent}}
         <h3>Action:</h3>
+        {{/actionPresent}}
         {{#actions}}
             <div class='card' style='margin-bottom: 1%; margin-left: 5%'>
                 <h5 class='card-header'>{{chamber}}</h5>
@@ -35,7 +42,9 @@
                 </div>
             </div>
         {{/actions}}
+        {{#votePresent}}
         <h3>Votes:</h3>
+        {{/votePresent}}
         {{#vote}}
             <div class='card {{#pass}}text-white bg-success{{/pass}} {{#fail}}text-white bg-danger{{/fail}}' style='margin-botton: 1%; margin-left: 5%'>
                 <h5 class='card-header'>{{chamber}}</h5>
@@ -52,4 +61,10 @@
     </div>
 </div>
 </body>
+<script>
+$('#button').click(function() {
+    window.location.replace('/search/'+encodeURIComponent($('#search').val()))
+    return false
+})
+</script>
 </html>
