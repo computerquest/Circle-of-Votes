@@ -1,24 +1,22 @@
 const express = require('express')
-var Congress = require('propublica-congress-node');   //maximum of 5000 calls per day
 var OpenSecretsClient = require('opensecrets-client', 'json'); //maximum of 200 calls per day
-var util = require("util")
-var request = require('request');
 var mergeJSON = require("merge-json");
 var fs = require('fs');
-var net = require('net'),
-JsonSocket = require('json-socket');
 var mustacheExpress = require('mustache-express');
+ppc = require('propublica-congress').create('CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF');
+var parseString = require('xml2js').parseString;
+var xml = "<root>Hello xml2js!</root>"
+const request = require('request');
 
 const app = express()
 app.set('view engine', 'mustache')
 app.engine('mustache', mustacheExpress());
 app.set('views', __dirname + '/public'); // you can change '/views' to '/public',
-ppc = require('propublica-congress').create('CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF');
 var clientO = new OpenSecretsClient('8fad4c535bd7763204689b57c70137fd'); //the json values are returned as a string
 
 var opKeys = ['8fad4c535bd7763204689b57c70137fd', 'd54dbd5a4f572862c2609aab9487a365', 'f8cea77db428d13c088ac8afff35e519', 'be091217e1dd3b340e2511e38699efa7', 'db37558aa3f970cadfb8345c26d1dde6','5928e99d96fac2a30906a126a293714d', '1ad00b500ae4d8a0a3333c7e1689eebb', 'c29969ede23d4f4871205c97548a8290', '2d87571b3707af874843d8e9f3391666']
 
-app.listen(80, () => console.log('Example app listening on port 3000!'))
+app.listen(9000, () => console.log('Example app listening on port 3000!'))
 
 app.get('/search/:query', function(req, res) {
     //res.setHeader('Content-Type', 'text/html')
@@ -121,7 +119,52 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 //coloring needs to reflect vote not party
                 nodes.push({id: info.member_id, label: info.name, color: cVal, size: 1, x: x, y: y})
             }
-             
+            request(resp.results.votes.vote.source, function (err, res, body) {
+                parseString(body, function (err, result) {
+                    if (typeof result['rollcall-vote'] != 'undefined') {
+                        var info = result['rollcall-vote']['vote-data'][0]['recorded-vote']
+                        for (i = 0; i < info.length; i++) {
+                            current = info[i].legislator[0]['$']
+
+                            vote = info[i]['vote'][0]
+                            if (vote == 'Yea') {
+                                vote = 'Yes'
+                            } else if (vote == 'Nae') {
+                                vote = 'No'
+                            }
+                            a = { party: current['party'], id: current['name-id'], vote: vote }
+                            if (members[a.id].vote != a.vote) {
+                                console.log('bad data')
+                            }
+                        }
+                    } else {
+                        var info = result.roll_call_vote.members[0].member
+                        for (i = 0; i < info.length; i++) {
+                            current = info[i]
+
+                            vote = current.vote_cast[0]
+                            if (vote == 'Yea') {
+                                vote = 'Yes'
+                            } else if (vote == 'Nay') {
+                                vote = 'No'
+                            }
+
+                            a = { party: current.party[0], id: current.first_name + ' ' + current.last_name, vote: vote }
+
+                            works = false
+                            for (i = 0; i < Object.keys(members).length; i++) {
+                                if (a.name == members[Object.keys(members)[i]] && a.vote == members[Object.keys(members)[i]].vote) {
+                                    works = true
+                                }
+                            }
+
+                            if (!works) {
+                                console.log('recieved bad data b', a, members[Object.keys(members)[i]])
+                            }
+                        }
+                    }
+                });
+            });
             //make the special interest nodes (parties, donors)
             var topIndustry = {}
             for (var i = 0; i < nodes.length; i++) {
@@ -160,10 +203,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             }
 
             nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 3, color: ((resp.results.votes.vote.result == 'Motion Rejected')? '#f00': '#0f0')})
-            //nodes.push({ id: 'main1', label: 'bill', color: '#000', x: 1, y: 0, size: 3 })
-            //nodes.push({ id: 'main2', label: 'bill', color: '#000', x: 0, y: 1, size: 3 })
-            //nodes.push({ id: 'main3', label: 'bill', color: '#000', x: -1, y: 0, size: 3 })
-            //nodes.push({ id: 'main4', label: 'bill', color: '#000', x: 0, y: -1, size: 3 })
 
             //add party nodes
             for(var i = 0; i < Object.keys(party).length; i++) {
@@ -208,6 +247,8 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     }
                     var x = cIndustry.x / total
                     var y = cIndustry.y / total
+
+                    //this would be used to keep nodes from the premimeter
                     //var angle = Math.atan(y/x)
                     /*if(Math.sqrt(Math.pow(Math.cos(angle)-x, 2)+Math.pow(Math.sin(angle)-y, 2)) < .1) {
                     console.log(Object.keys(topIndustry)[i], x, y, -Math.cos(angle) * .1 * (Math.abs(x) / x), -Math.sin(angle) * .1 * (Math.abs(y) / y))
@@ -295,8 +336,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             }
         }).then(function(value) {
             solution = { "nodes": nodes, "edges": edges }
-
-            console.log('loading the file.....')
+            console.log('returning graph')
             res.render('graph.mustache', { data: JSON.stringify(solution) })
         })
     })
@@ -378,24 +418,64 @@ app.get('/testing', function (req, res) {
 
     var first = ppc.getCurrentSenators('NY')
 
+    extRes = res
+    //https://www.senate.gov/legislative/LIS/roll_call_votes/vote1151/vote_115_1_00017.xml
+    //http://clerk.house.gov/evs/2017/roll438.xml
+    request('https://www.senate.gov/legislative/LIS/roll_call_votes/vote1151/vote_115_1_00017.xml', function (err, res, body) {
+        parseString(body, function (err, result) {
+            console.log(result);
+            //extRes.send(result)
+
+            ans = {}
+
+            if(!typeof result['rollcall-vote'] === 'undefined') {
+                var info = result['rollcall-vote']['vote-data'][0]['recorded-vote']
+                for(i = 0; i < info.length; i++) {
+                    current = info[i].legislator[0]['$']
+
+                    vote = info[i]['vote'][0]
+                    if(vote == 'Yea') {
+                        vote = 'Yes'
+                    } else if (vote == 'Nae') {
+                        vote = 'No'
+                    }
+                    ans[current['name-id']] = {party: current['party'], id: current['name-id'], vote: vote}
+                }
+                console.log('ans ', ans)
+            } else {
+                var info = result.roll_call_vote.members[0].member
+                for (i = 0; i < info.length; i++) {
+                    current = info[i]
+
+                    vote = current.vote_cast[0]
+                    if (vote == 'Yea') {
+                        vote = 'Yes'
+                    } else if (vote == 'Nay') {
+                        vote = 'No'
+                    }
+                    ans[current.first_name[0] + ' ' + current.last_name[0]] = { party: current.party[0], id: current.first_name + ' ' + current.last_name, vote: vote }
+                }
+            }
+            extRes.send(ans)
+        });
+    });
+
     var second = new Promise((resolve, reject) => {
         clientO.makeRequest('candIndustry', { cid: 'N00000286', cycle:2014, output: 'json' })
             .on('complete', function (res) {
                 if (res instanceof Error) console.log('Something went wrong');
-                console.log(res)
                 val = verifiedJSON(res)
 
                 resolve(val)
             })
     });
     Promise.all([first, second]).then(function (value, boo = res) {
-        console.log(value[1])
         if(value[1].bad) {
-            boo.send(value[0])
+            //boo.send(value[0])
         } else {
             var ans = mergeJSON.merge(JSON.parse(JSON.stringify(value[0])), JSON.parse(JSON.stringify((value[1]))))
             
-            boo.send(ans)
+            //boo.send(ans)
         }
     })
 })

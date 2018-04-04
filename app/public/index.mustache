@@ -34,8 +34,6 @@
 
 <script>
 $('#button').click(function() {
-    alert(encodeURIComponent($('#search').val()))
-    console.log('click ',encodeURIComponent($('#search').val()))
     window.location.replace('http://localhost:3000/search/'+encodeURIComponent($('#search').val()))
     return false
 })
