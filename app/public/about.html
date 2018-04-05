@@ -23,11 +23,19 @@
 
     <div style='margin-left: 2%; margin-top: 2%; line-height: 40px'>
         <h1>About</h1>
-        <div style='margin-left: 5%; margin-right:10%; font-size: 20px; '>
-            <p>This visualization was created with the goal of best informing the viewer on the way their representatives vote. The nodes that create the outer circle are members of the House of Representatives or the Senate and are colored according to party. Each of the congressmen or women get a lighter colored connection if they voted. These connections are connected to the bill itself, an industry, or their party. When connecting to a party or the dark green industry nodes, the connection keeps its light color, but if the connection is directly to the bill it represents the vote of that individual, red being nay and green being yea. </p>
+        <div style='margin-left: 5%; margin-right:10%; font-size: 20px;'>
+            <p>This visualization was created with the goal of best informing the viewer on the way their representatives vote. The nodes that create the outer circle are members of the House of Representatives or the Senate and are colored according to the left and right leanings of the members (dw nomination value). Each of the congressmen or women get a lighter colored connection if they voted. These connections are connected to the bill itself, an industry, or their party. When connecting to a party or the dark green industry nodes, the connection keeps its light color, but if the connection is directly to the bill it represents the vote of that individual, red being nay and green being yea. </p>
             <p>The industry and party nodes represent the collective votes of groups of people, when a majority of the members or the party or beneficiaries of an industry vote in a similar manner. The nodes from the industry to the party is representative of the votes of all those connected to it and is colored in the same manner as voting as an individual.</p>
             <p>You can zoom on the graph as well as click on nodes in order to explore the visualization.</p>
-            <p>Have fun.</p>
+            <p>Have fun.</p> 
+            
+            <h2>Data Sources</h2>    
+            <div style='margin-left: 5%; font-size: 20px; line-height: 30px'>
+                <p><bold  class="font-weight-bold">ProPublica Congress:</bold> Provided the data for bills and members. Their data stems from different sources including congress.gov.</p>
+                <p><bold class="font-weight-bold">Center for Responsive Politics:</bold> Provided the financial data for members of the House of Representatives and Senate.</p>
+                <p><bold  class="font-weight-bold">congress.gov:</bold> Used to verify voting data received from ProPublica.</p>
+            </div>
+            </div>
         </div>
     </div>
 </body>

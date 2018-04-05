@@ -20,6 +20,7 @@
             <button id="button" class="btn btn-outline-dark my-2 my-sm-0" onclick="click">Search</button>
         </form>
     </nav>
+    <h1 style='margin: 1%'>Recent Votes</h1>
     {{#bills}}
         <div class='card border-black {{#singleVote}}{{#pass}}text-white bg-success{{/pass}} {{^pass}}text-white bg-danger{{/pass}}{{/singleVote}}' style='margin-bottom: 1%; margin-left:1%; margin-right: 1%;'>
             <h5 class='card-header'>{{slug}}</h5>

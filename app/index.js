@@ -79,6 +79,15 @@ app.get('/billinfo/:billId', function (req, res) {
         res.sendFile(__dirname+'/public/error.html')
     })
 })
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     console.log('starting')
     res.setHeader('Content-Type', 'text/html')
@@ -98,7 +107,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             var party = {}
             for(var i = 0; i < sortedResp.length; i++) {
                 var info = sortedResp[i]
-                var cVal = '#ffff33'
+                var cVal = [0, 0, 0]
                 members[info.member_id] = {name: info.name, vote: info.vote_position, party: info.party, voteShown: false }
                 if(typeof party[info.party] === 'undefined') {
                     party[info.party] = {x: 0, y: 0, memberid:[], name: info.party, yes: 0, no: 0, none: 0}
@@ -112,11 +121,16 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else {
                     party[info.party].none++
                 }
-
+                
+                change = Math.round(Math.abs(100*info.dw_nominate))
                 if(info.party == 'R') {
-                    cVal = '#ff3333'
+                    cVal[0] = 255
+                    cVal[1] = 204-change
+                    cVal[2] = 204-change
                 } else if (info.party == 'D') {
-                    cVal = '#3333ff'
+                    cVal[0] = Math.round(204-change*1.31)
+                    cVal[1] = 217-change
+                    cVal[2] = 255
                 }
 
                 var angle = 2*i*Math.PI/sortedResp.length
@@ -126,8 +140,9 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
 
                 party[info.party].x += x
                 party[info.party].y += y
+                console.log(cVal, rgbToHex(cVal[0],cVal[1],cVal[2]))
                 //coloring needs to reflect vote not party
-                nodes.push({id: info.member_id, label: info.name, color: cVal, size: 1, x: x, y: y})
+                nodes.push({id: info.member_id, label: info.name, color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y})
             }
             request(resp.results.votes.vote.source, function (err, res, body) {
                 parseString(body, function (err, result) {
