@@ -41,13 +41,13 @@ app.get('/home', function(req, res) {
     res.setHeader('Content-Type', 'text/html')
     request({ url: 'https://api.propublica.org/congress/v1/both/votes/recent.json', headers: { 'X-API-Key': 'CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF'}}, function (err, lRes, body) {
         res.setHeader('Content-Type', 'text/html')   
-        submit = { bills: [] }
+        submit = { singleVote: true, bills: [] }
         body = JSON.parse(body)
         goodStuff = body.results.votes
         for (i = 0; i < goodStuff.length; i++) {
             var str = goodStuff[i].bill.bill_id
             var arr = str.split("-")
-            submit.bills.push({singleVote: true, pass:((goodStuff[i].result.includes('Pass') || goodStuff[i].result.includes('Agreed'))? true:false),result: goodStuff[i].result, slug:goodStuff[i].chamber+' | '+ arr[0], link: '../billinfo/' + arr[0], name: goodStuff[i].bill.title, summary: ((goodStuff[i].description=='')? 'None provided':goodStuff[i].description), lastDate: ((null==goodStuff[i].bill.latest_action)? 'None provided':goodStuff[i].bill.latest_action)})
+            submit.bills.push({pass:((goodStuff[i].result.includes('Pass') || goodStuff[i].result.includes('Agreed'))? true:false),result: goodStuff[i].result, slug:goodStuff[i].chamber+' | '+ arr[0], link: '../billinfo/' + arr[0], name: goodStuff[i].bill.title, summary: ((goodStuff[i].description=='')? 'None provided':goodStuff[i].description), lastDate: ((null==goodStuff[i].bill.latest_action)? 'None provided':goodStuff[i].bill.latest_action)})
         }
         res.render('index.mustache', submit)
     })
@@ -108,7 +108,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             for(var i = 0; i < sortedResp.length; i++) {
                 var info = sortedResp[i]
                 var cVal = [0, 0, 0]
-                members[info.member_id] = {name: info.name, vote: info.vote_position, party: info.party, voteShown: false }
                 if(typeof party[info.party] === 'undefined') {
                     party[info.party] = {x: 0, y: 0, memberid:[], name: info.party, yes: 0, no: 0, none: 0}
                 }
@@ -123,15 +122,15 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 }
                 
                 change = Math.round(Math.abs(100*info.dw_nominate))
-                if(info.party == 'R') {
+                if(info.dw_nominate > 0) {
                     cVal[0] = 255
                     cVal[1] = 204-change
                     cVal[2] = 204-change
-                } else if (info.party == 'D') {
+                } else {
                     cVal[0] = Math.round(204-change*1.31)
                     cVal[1] = 217-change
                     cVal[2] = 255
-                }
+                } 
 
                 var angle = 2*i*Math.PI/sortedResp.length
 
@@ -140,9 +139,10 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
 
                 party[info.party].x += x
                 party[info.party].y += y
-                console.log(cVal, rgbToHex(cVal[0],cVal[1],cVal[2]))
+
+                members[info.member_id] = {name: info.name, color: cVal, vote: info.vote_position, party: info.party, voteShown: false }
                 //coloring needs to reflect vote not party
-                nodes.push({id: info.member_id, label: info.name, color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y})
+                nodes.push({id: info.member_id, label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y})
             }
             request(resp.results.votes.vote.source, function (err, res, body) {
                 parseString(body, function (err, result) {
@@ -230,7 +230,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 topIndustry[key].memberid.push(obj.id)
             }
 
-            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 3, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0')})
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0')})
 
             //add party nodes
             for(var i = 0; i < Object.keys(party).length; i++) {
@@ -255,7 +255,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else if (Object.keys(party)[i] == 'D') {
                     cVal = '#0000e6'
                 }
-                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 2, x: current.x / total, y: current.y / total }) //todo should change size
+                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 3+2*(total/Object.keys(members).length), x: current.x / total, y: current.y / total }) //todo should change size
             }
 
             //add industry nodes
@@ -277,6 +277,12 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     var x = cIndustry.x / total
                     var y = cIndustry.y / total
 
+                    cVal = [0,0,0]
+                    for(a = 0; a < cIndustry.memberid.length; a++) {
+                        cVal[0] += members[cIndustry.memberid[a]].color[0]
+                        cVal[1] += members[cIndustry.memberid[a]].color[1]
+                        cVal[2] += members[cIndustry.memberid[a]].color[2]
+                    }
                     //this would be used to keep nodes from the premimeter
                     //var angle = Math.atan(y/x)
                     /*if(Math.sqrt(Math.pow(Math.cos(angle)-x, 2)+Math.pow(Math.sin(angle)-y, 2)) < .1) {
@@ -284,8 +290,8 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                         x += -Math.cos(angle)*.1*(Math.abs(x)/x)
                        y += -Math.sin(angle) * .1 * (Math.abs(y) / y)
                         console.log(x,y)
-                   } */                   
-                    nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: '#009933', size: 2, x: x, y: y}) //todo should change size
+                   } */
+                    nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: 2+40*(total/Object.keys(members).length), x: x, y: y}) //todo should change size
                 }
             }
 
