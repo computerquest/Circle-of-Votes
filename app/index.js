@@ -429,7 +429,7 @@ function writingCallback(pos, overallData, congress) {
             console.log('bad id was '+ overallData.id +' crp: '+ overallData.crp_id)
         } 
 
-        fs.writeFile('./persistentdata/' + overallData.id + '.' + congress + '.json', JSON.stringify(overallData), function (err) {
+        fs.writeFile('./app/persistentdata/' + overallData.id + '.' + congress + '.json', JSON.stringify(overallData), function (err) {
             if (err) throw err;
         });
         console.log('finished process')
