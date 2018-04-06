@@ -9,6 +9,7 @@ var xml = "<root>Hello xml2js!</root>"
 const request = require('request');
 
 const app = express()
+app.use(express.static('app/public'))
 app.set('view engine', 'mustache')
 app.engine('mustache', mustacheExpress());
 app.set('views', __dirname + '/public');
@@ -105,9 +106,10 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             })       
             //puts all of the members of congress in the circular formation and sets up the basic node
             var party = {}
+            var topIndustry = {}
             for(var i = 0; i < sortedResp.length; i++) {
                 var info = sortedResp[i]
-                var cVal = [0, 0, 0]
+
                 if(typeof party[info.party] === 'undefined') {
                     party[info.party] = {x: 0, y: 0, memberid:[], name: info.party, yes: 0, no: 0, none: 0}
                 }
@@ -120,87 +122,13 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else {
                     party[info.party].none++
                 }
-                
-                change = Math.round(Math.abs(100*info.dw_nominate))
-                if(info.dw_nominate > 0) {
-                    cVal[0] = 255
-                    cVal[1] = 204-change
-                    cVal[2] = 204-change
-                } else {
-                    cVal[0] = Math.round(204-change*1.31)
-                    cVal[1] = 217-change
-                    cVal[2] = 255
-                } 
 
-                var angle = 2*i*Math.PI/sortedResp.length
-
-                x = Math.cos(angle)
-                y = Math.sin(angle)
-
-                party[info.party].x += x
-                party[info.party].y += y
-
-                members[info.member_id] = {name: info.name, color: cVal, vote: info.vote_position, party: info.party, voteShown: false }
-                //coloring needs to reflect vote not party
-                nodes.push({id: info.member_id, label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y})
-            }
-            request(resp.results.votes.vote.source, function (err, res, body) {
-                parseString(body, function (err, result) {
-                    if (typeof result['rollcall-vote'] != 'undefined') {
-                        var info = result['rollcall-vote']['vote-data'][0]['recorded-vote']
-                        for (i = 0; i < info.length; i++) {
-                            current = info[i].legislator[0]['$']
-
-                            vote = info[i]['vote'][0]
-                            if (vote == 'Yea') {
-                                vote = 'Yes'
-                            } else if (vote == 'Nay') {
-                                vote = 'No'
-                            }
-                            a = { party: current['party'], id: current['name-id'], vote: vote }
-                            if (members[a.id].vote != a.vote) {
-                                console.log('bad data')
-                                console.log('recieved bad data a', a, members[a.id])
-                            }
-                        }
-                    } else {
-                        var info = result.roll_call_vote.members[0].member
-                        for (i = 0; i < info.length; i++) {
-                            current = info[i]
-
-                            vote = current.vote_cast[0]
-                            if (vote == 'Yea') {
-                                vote = 'Yes'
-                            } else if (vote == 'Nay') {
-                                vote = 'No'
-                            }
-
-                            a = { party: current.party[0], name: current.first_name + ' ' + current.last_name, vote: vote }
-
-                            works = false
-                            for (i = 0; i < Object.keys(members).length; i++) {
-                                if (a.name == members[Object.keys(members)[i]].name && a.vote == members[Object.keys(members)[i]].vote) {
-                                    works = true
-                                } else if (a.name == members[Object.keys(members)[i]].name) {
-                                    console.log(members[Object.keys(members)[i]])
-                                }
-                            }
-
-                            if (!works) {
-                                console.log('recieved bad data b', a, members[Object.keys(members)[i]])
-                            }
-                        }
-                    }
-                });
-            });
-            //make the special interest nodes (parties, donors)
-            var topIndustry = {}
-            for (var i = 0; i < nodes.length; i++) {
-                var obj = JSON.parse(fs.readFileSync('./app/persistentdata/' + nodes[i].id + '.' + req.params.congress +'.json', 'utf8'));
+                var obj = JSON.parse(fs.readFileSync('./app/persistentdata/' + info.member_id + '.' + req.params.congress +'.json', 'utf8'));
                 
                 var response = sortedResp[i].vote_position;
 
                 if(typeof obj.response === 'undefined') {
+                    members[info.member_id] = { dw_nominate: info.dw_nominate, name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: undefined, acategory: 'member' }
                     continue
                 }
 
@@ -224,15 +152,42 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     topIndustry[key].none++
                 }
 
-                topIndustry[key].x += nodes[i].x
-                topIndustry[key].y += nodes[i].y
-
-                topIndustry[key].memberid.push(obj.id)
+                topIndustry[key].memberid.push(info.member_id)
+                members[info.member_id] = { dw_nominate: info.dw_nominate, name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: key, acategory: 'member' }
             }
 
-            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0')})
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: Object.keys(members).length/2, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0'), attributes:{acategory:'master', vote: 'master'}})
+            
+            //filter industry
+            for (var i = 0; i < Object.keys(topIndustry).length; i++) {
+                cIndustry = topIndustry[Object.keys(topIndustry)[i]]
+                total = cIndustry.yes + cIndustry.no + cIndustry.none
 
-            //add party nodes
+                if (total<2||!(cIndustry.yes / total > .5 || cIndustry.no / total > .5 || cIndustry.none / total > .5)){//} || total < 2) {
+                    delete topIndustry[Object.keys(topIndustry)[i]]
+                    i--
+                    continue
+                } else {
+                    topIndustry[Object.keys(topIndustry)[i]].vote = 'No'
+                    if (cIndustry.yes / total > .5) {
+                        topIndustry[Object.keys(topIndustry)[i]].vote = 'Yes'
+                    } else if (cIndustry.none / total > .5) {
+                        topIndustry[Object.keys(topIndustry)[i]].vote = 'Not Voting'
+                    }
+                }
+
+                for(a = 0; a < topIndustry[Object.keys(topIndustry)[i]].memberid.length; a++) {
+                    var info = members[topIndustry[Object.keys(topIndustry)[i]].memberid[a]]
+                    if(info.vote == topIndustry[Object.keys(topIndustry)[i]].vote) {
+                        members[topIndustry[Object.keys(topIndustry)[i]].memberid[a]].acategory = 'industry'
+                    } else {
+                        topIndustry[Object.keys(topIndustry)[i]].memberid.splice(a,1)
+                        a--
+                    }
+                }
+            }
+
+            //filter party
             for(var i = 0; i < Object.keys(party).length; i++) {
                 var current = party[Object.keys(party)[i]] 
                 var total = current.yes + current.no + current.none
@@ -249,13 +204,64 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     continue
                 }
 
+                for(a = 0; a < party[Object.keys(party)[i]].memberid.length; a++) {
+                    var info = members[party[Object.keys(party)[i]].memberid[a]]
+                    if(info.acategory == 'member' && info.vote == party[Object.keys(party)[i]].vote) {
+                        members[party[Object.keys(party)[i]].memberid[a]].acategory = 'party'
+                    } else {
+                        party[Object.keys(party)[i]].memberid.splice(a,1)
+                        a--
+                    }
+                }
+            }          
+
+            //add member nodes
+            for(i = 0; i < Object.keys(members).length; i++) {
+                var info = members[Object.keys(members)[i]]
+                console.log(info.acategory)
+                var cVal = [0, 0, 0]
+                
+                change = Math.round(Math.abs(100*info.dw_nominate))
+                if(info.dw_nominate > 0) {
+                    cVal[0] = 255
+                    cVal[1] = 204-change
+                    cVal[2] = 204-change
+                } else {
+                    cVal[0] = Math.round(204-change*1.31)
+                    cVal[1] = 217-change
+                    cVal[2] = 255
+                } 
+
+                var angle = 2*i*Math.PI/sortedResp.length
+
+                x = Math.cos(angle)
+                y = Math.sin(angle)
+
+                if(info.acategory == 'party') {
+                    party[info.party].x += x
+                    party[info.party].y += y
+                } else if (info.acategory == 'industry') {
+                    topIndustry[info.industry].x += x
+                    topIndustry[info.industry].y += y
+                }
+                members[Object.keys(members)[i]].color = cVal
+                console.log(info.vote)
+                //coloring needs to reflect vote not party
+                nodes.push({id: Object.keys(members)[i], label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y, attributes:{acategory: info.acategory, vote:info.vote, party:info.party}})
+            }
+
+            //add party nodes
+            for(var i = 0; i < Object.keys(party).length; i++) {
+                var current = party[Object.keys(party)[i]] 
+                var total = current.yes + current.no + current.none
+
                 cVal = '#ffff00'
                 if (Object.keys(party)[i] == 'R') {
                     cVal = '#e60000'
                 } else if (Object.keys(party)[i] == 'D') {
                     cVal = '#0000e6'
                 }
-                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 3+2*(total/Object.keys(members).length), x: current.x / total, y: current.y / total }) //todo should change size
+                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: total, x: current.x / total, y: current.y / total, attributes:{acategory:'party', party:Object.keys(party)[i], vote: party[Object.keys(party)[i]].vote}}) //todo should change size
             }
 
             //add industry nodes
@@ -263,53 +269,37 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 cIndustry = topIndustry[Object.keys(topIndustry)[i]]
                 total = cIndustry.yes + cIndustry.no + cIndustry.none
 
-                if (total<2||!(cIndustry.yes / total > .5 || cIndustry.no / total > .5 || cIndustry.none / total > .5)){//} || total < 2) {
-                    delete topIndustry[Object.keys(topIndustry)[i]]
-                    i--
-                    continue
-                } else {
-                    topIndustry[Object.keys(topIndustry)[i]].vote = 'No'
-                    if (cIndustry.yes / total > .5) {
-                        topIndustry[Object.keys(topIndustry)[i]].vote = 'Yes'
-                    } else if (cIndustry.none / total > .5) {
-                        topIndustry[Object.keys(topIndustry)[i]].vote = 'Not Voting'
-                    }
-                    var x = cIndustry.x / total
-                    var y = cIndustry.y / total
+                var x = cIndustry.x / total
+                var y = cIndustry.y / total
 
-                    cVal = [0,0,0]
-                    for(a = 0; a < cIndustry.memberid.length; a++) {
-                        cVal[0] += members[cIndustry.memberid[a]].color[0]
-                        cVal[1] += members[cIndustry.memberid[a]].color[1]
-                        cVal[2] += members[cIndustry.memberid[a]].color[2]
-                    }
-                    //this would be used to keep nodes from the premimeter
-                    //var angle = Math.atan(y/x)
-                    /*if(Math.sqrt(Math.pow(Math.cos(angle)-x, 2)+Math.pow(Math.sin(angle)-y, 2)) < .1) {
-                    console.log(Object.keys(topIndustry)[i], x, y, -Math.cos(angle) * .1 * (Math.abs(x) / x), -Math.sin(angle) * .1 * (Math.abs(y) / y))
-                        x += -Math.cos(angle)*.1*(Math.abs(x)/x)
-                       y += -Math.sin(angle) * .1 * (Math.abs(y) / y)
-                        console.log(x,y)
-                   } */
-                    nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: 2+40*(total/Object.keys(members).length), x: x, y: y}) //todo should change size
+                cVal = [0,0,0]
+                for(a = 0; a < cIndustry.memberid.length; a++) {
+                    cVal[0] += members[cIndustry.memberid[a]].color[0]
+                    cVal[1] += members[cIndustry.memberid[a]].color[1]
+                    cVal[2] += members[cIndustry.memberid[a]].color[2]
                 }
+                //this would be used to keep nodes from the premimeter
+                //var angle = Math.atan(y/x)
+                /*if(Math.sqrt(Math.pow(Math.cos(angle)-x, 2)+Math.pow(Math.sin(angle)-y, 2)) < .1) {
+                console.log(Object.keys(topIndustry)[i], x, y, -Math.cos(angle) * .1 * (Math.abs(x) / x), -Math.sin(angle) * .1 * (Math.abs(y) / y))
+                    x += -Math.cos(angle)*.1*(Math.abs(x)/x)
+                    y += -Math.sin(angle) * .1 * (Math.abs(y) / y)
+                    console.log(x,y)
+                } */
+                nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: total, x: x, y: y, attributes:{acategory:'industry', vote:topIndustry[Object.keys(topIndustry)[i]].vote}}) //todo should change size
             }
 
             //members to industry
             for (var i = 0; i < Object.keys(topIndustry).length; i++) {
                 currentIndustry = topIndustry[Object.keys(topIndustry)[i]].memberid
                 for(var a = 0; a < currentIndustry.length; a++) {  
-                    if (members[currentIndustry[a]].vote == topIndustry[Object.keys(topIndustry)[i]].vote) {    
-                        members[currentIndustry[a]].voteShown = true
-                        
-                        cVal = '#ffff80'
-                        if (members[currentIndustry[a]].party == 'D') {
-                            cVal = '#99b3ff'
-                        } else if (members[currentIndustry[a]].party == 'R') {
-                            cVal = '#ff8080'
-                        }
-                        edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: cVal})
+                    cVal = '#ffff80'
+                    if (members[currentIndustry[a]].party == 'D') {
+                        cVal = '#99b3ff'
+                    } else if (members[currentIndustry[a]].party == 'R') {
+                        cVal = '#ff8080'
                     }
+                    edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: cVal})
                 }
             }
 
@@ -336,10 +326,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 }
 
                 for (var a = 0; a < currentIndustry.length; a++) {
-                    if (members[currentIndustry[a]].vote == party[Object.keys(party)[i]].vote && members[currentIndustry[a]].voteShown == false) {               
-                        members[currentIndustry[a]].voteShown = true
-                        edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(party)[i], source: currentIndustry[a], target: Object.keys(party)[i], color: cVal})
-                    }
+                    edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(party)[i], source: currentIndustry[a], target: Object.keys(party)[i], color: cVal})
                 }
             }
 
@@ -358,7 +345,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             //members to center
             for (var i = 0; i < Object.keys(members).length; i++) {
                 current = members[Object.keys(members)[i]]
-                if(!current.voteShown && current.vote != "Not Voting") {
+                if(current.acategory =='member'&& current.vote != "Not Voting") {
                     var cVal = '#ff0000'
                     if (current.vote == 'Yes') {
                         cVal = '#00ff00'
