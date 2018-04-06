@@ -9,6 +9,7 @@ var xml = "<root>Hello xml2js!</root>"
 const request = require('request');
 
 const app = express()
+app.use(express.static('app/public'))
 app.set('view engine', 'mustache')
 app.engine('mustache', mustacheExpress());
 app.set('views', __dirname + '/public');
@@ -142,57 +143,9 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
 
                 members[info.member_id] = {name: info.name, color: cVal, vote: info.vote_position, party: info.party, voteShown: false }
                 //coloring needs to reflect vote not party
-                nodes.push({id: info.member_id, label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y})
+                nodes.push({id: info.member_id, label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y, attributes:{acategory:'member', vote:info.vote_position, party:info.party}})
             }
-            request(resp.results.votes.vote.source, function (err, res, body) {
-                parseString(body, function (err, result) {
-                    if (typeof result['rollcall-vote'] != 'undefined') {
-                        var info = result['rollcall-vote']['vote-data'][0]['recorded-vote']
-                        for (i = 0; i < info.length; i++) {
-                            current = info[i].legislator[0]['$']
 
-                            vote = info[i]['vote'][0]
-                            if (vote == 'Yea') {
-                                vote = 'Yes'
-                            } else if (vote == 'Nay') {
-                                vote = 'No'
-                            }
-                            a = { party: current['party'], id: current['name-id'], vote: vote }
-                            if (members[a.id].vote != a.vote) {
-                                console.log('bad data')
-                                console.log('recieved bad data a', a, members[a.id])
-                            }
-                        }
-                    } else {
-                        var info = result.roll_call_vote.members[0].member
-                        for (i = 0; i < info.length; i++) {
-                            current = info[i]
-
-                            vote = current.vote_cast[0]
-                            if (vote == 'Yea') {
-                                vote = 'Yes'
-                            } else if (vote == 'Nay') {
-                                vote = 'No'
-                            }
-
-                            a = { party: current.party[0], name: current.first_name + ' ' + current.last_name, vote: vote }
-
-                            works = false
-                            for (i = 0; i < Object.keys(members).length; i++) {
-                                if (a.name == members[Object.keys(members)[i]].name && a.vote == members[Object.keys(members)[i]].vote) {
-                                    works = true
-                                } else if (a.name == members[Object.keys(members)[i]].name) {
-                                    console.log(members[Object.keys(members)[i]])
-                                }
-                            }
-
-                            if (!works) {
-                                console.log('recieved bad data b', a, members[Object.keys(members)[i]])
-                            }
-                        }
-                    }
-                });
-            });
             //make the special interest nodes (parties, donors)
             var topIndustry = {}
             for (var i = 0; i < nodes.length; i++) {
@@ -230,7 +183,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 topIndustry[key].memberid.push(obj.id)
             }
 
-            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0')})
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0'), attributes:{}})
 
             //add party nodes
             for(var i = 0; i < Object.keys(party).length; i++) {
@@ -255,7 +208,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else if (Object.keys(party)[i] == 'D') {
                     cVal = '#0000e6'
                 }
-                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 3+2*(total/Object.keys(members).length), x: current.x / total, y: current.y / total }) //todo should change size
+                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 3+2*(total/Object.keys(members).length), x: current.x / total, y: current.y / total, attributes:{acategory:'party', party:Object.keys(party)[i], vote: party[Object.keys(party)[i]].vote}}) //todo should change size
             }
 
             //add industry nodes
@@ -291,7 +244,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                        y += -Math.sin(angle) * .1 * (Math.abs(y) / y)
                         console.log(x,y)
                    } */
-                    nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: 2+40*(total/Object.keys(members).length), x: x, y: y}) //todo should change size
+                    nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: 2+40*(total/Object.keys(members).length), x: x, y: y, attributes:{acategory:'industry', vote:topIndustry[Object.keys(topIndustry)[i]].vote}}) //todo should change size
                 }
             }
 

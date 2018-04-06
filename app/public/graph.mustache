@@ -1,17 +1,137 @@
 <html>
-
 <head>
-  <style type="text/css">
-    #container {
-      max-width: 100%;
-      height: 100%;
-    }
-  </style>
+  <title>Graph</title>
 </head>
 
 <body style="padding: 0px; margin: 0px;">
-  <div id="container"></div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/sigma.js/1.2.1/sigma.min.js"></script>
+  <div id="container">
+    <style>
+      body {
+        color: black;
+        font-size: 14px;
+        font-family: Lato, sans-serif;
+      }
+      #graph-container {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        position: absolute;
+      }
+      #control-pane {
+        top: 10px;
+        /*bottom: 10px;*/
+        right: 10px;
+        position: absolute;
+        width: 230px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      }
+      #control-pane > div {
+        margin: 10px;
+        overflow-x: auto;
+      }
+      .line {
+        clear: both;
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 12px 0 0 0;
+        border-bottom: 1px solid #aac789;
+        background: transparent;
+      }
+      h2, h3, h4 {
+        padding: 0;
+        font-variant: small-caps;
+      }
+      .green {
+        color: #437356;
+      }
+      h2.underline {
+        color: #437356;
+        background: #f4f0e4;
+        margin: 0;
+        border-radius: 2px;
+        padding: 8px 12px;
+        font-weight: 700;
+      }
+      .hidden {
+        display: none;
+        visibility: hidden;
+      }
+      input[type=range] {
+        width: 160px;
+      }
+    </style>
+    <div id="graph-container"></div>
+    <div id="control-pane">
+      <h2 class="underline">filters</h2>
+      <div>
+        <h3>node category</h3>
+        <select id="node-category">
+          <option value="" selected>All categories</option>
+          <option value="party" selected>Party</option>
+          <option value="industry" selected>Industry</option>
+          <option value="member" selected>Member</option>
+        </select>
+      </div>
+      <span class="line"></span>
+      <div>
+        <button id="reset-btn">Reset filters</button>
+        <button id="export-btn">Export</button>
+      </div>
+      <div id="dump" class="hidden"></div>
+    </div>
+  </div>
+  <script src="/sigma.js/src/sigma.core.js"></script>
+  <script src="/sigma.js/src/conrad.js"></script>
+  <script src="/sigma.js/src/utils/sigma.utils.js"></script>
+  <script src="/sigma.js/src/utils/sigma.polyfills.js"></script>
+  <script src="/sigma.js/src/sigma.settings.js"></script>
+  <script src="/sigma.js/src/classes/sigma.classes.dispatcher.js"></script>
+  <script src="/sigma.js/src/classes/sigma.classes.configurable.js"></script>
+  <script src="/sigma.js/src/classes/sigma.classes.graph.js"></script>
+  <script src="/sigma.js/src/classes/sigma.classes.camera.js"></script>
+  <script src="/sigma.js/src/classes/sigma.classes.quad.js"></script>
+  <script src="/sigma.js/src/classes/sigma.classes.edgequad.js"></script>
+  <script src="/sigma.js/src/captors/sigma.captors.mouse.js"></script>
+  <script src="/sigma.js/src/captors/sigma.captors.touch.js"></script>
+  <script src="/sigma.js/src/renderers/sigma.renderers.canvas.js"></script>
+  <script src="/sigma.js/src/renderers/sigma.renderers.webgl.js"></script>
+  <script src="/sigma.js/src/renderers/sigma.renderers.svg.js"></script>
+  <script src="/sigma.js/src/renderers/sigma.renderers.def.js"></script>
+  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.nodes.def.js"></script>
+  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.nodes.fast.js"></script>
+  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.def.js"></script>
+  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.fast.js"></script>
+  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.arrow.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.labels.def.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.hovers.def.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.nodes.def.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.def.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.curve.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.arrow.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.curvedArrow.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.def.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.curve.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.arrow.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.curvedArrow.js"></script>
+  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.extremities.def.js"></script>
+  <script src="/sigma.js/src/renderers/svg/sigma.svg.utils.js"></script>
+  <script src="/sigma.js/src/renderers/svg/sigma.svg.nodes.def.js"></script>
+  <script src="/sigma.js/src/renderers/svg/sigma.svg.edges.def.js"></script>
+  <script src="/sigma.js/src/renderers/svg/sigma.svg.edges.curve.js"></script>
+  <script src="/sigma.js/src/renderers/svg/sigma.svg.labels.def.js"></script>
+  <script src="/sigma.js/src/renderers/svg/sigma.svg.hovers.def.js"></script>
+  <script src="/sigma.js/src/middlewares/sigma.middlewares.rescale.js"></script>
+  <script src="/sigma.js/src/middlewares/sigma.middlewares.copy.js"></script>
+  <script src="/sigma.js/src/misc/sigma.misc.animation.js"></script>
+  <script src="/sigma.js/src/misc/sigma.misc.bindEvents.js"></script>
+  <script src="/sigma.js/src/misc/sigma.misc.bindDOMEvents.js"></script>
+  <script src="/sigma.js/src/misc/sigma.misc.drawHovers.js"></script>
+  <!-- END SIGMA IMPORTS -->
+  <script src="/sigma.js/plugins/sigma.parsers.gexf/gexf-parser.js"></script>
+  <script src="/sigma.js/plugins/sigma.parsers.gexf/sigma.parsers.gexf.js"></script>
+  <script src="/sigma.js/plugins/sigma.plugins.filter/sigma.plugins.filter.js"></script>
   <script>
     // Add a method to the graph model that returns an
     // object with every neighbors of a node inside:
@@ -27,70 +147,168 @@
     });
 
     var data = {{{data}}}
-    sig = new sigma({ 
+    s = new sigma({ 
         graph: data,
         container: 'container',
         settings: {
             defaultNodeColor: '#ec5148'
         }
     })
-    function start(s) {
-        // We first need to save the original colors of our
-        // nodes and edges, like this:
-        s.graph.nodes().forEach(function(n) {
-          n.originalColor = n.color;
-        });
-        s.graph.edges().forEach(function(e) {
-          e.originalColor = e.color;
-        });
+ 
+    // We first need to save the original colors of our
+    // nodes and edges, like this:
+    s.graph.nodes().forEach(function(n) {
+      n.originalColor = n.color;
+    });
+    s.graph.edges().forEach(function(e) {
+      e.originalColor = e.color;
+    });
 
-        // When a node is clicked, we check for each node
-        // if it is a neighbor of the clicked one. If not,
-        // we set its color as grey, and else, it takes its
-        // original color.
-        // We do the same for the edges, and we only keep
-        // edges that have both extremities colored.
-        s.bind('clickNode', function(e) {
-          var nodeId = e.data.node.id,
-              toKeep = s.graph.neighbors(nodeId);
-          toKeep[nodeId] = e.data.node;
+    // When a node is clicked, we check for each node
+    // if it is a neighbor of the clicked one. If not,
+    // we set its color as grey, and else, it takes its
+    // original color.
+    // We do the same for the edges, and we only keep
+    // edges that have both extremities colored.
+    s.bind('clickNode', function(e) {
+      var nodeId = e.data.node.id,
+          toKeep = s.graph.neighbors(nodeId);
+      toKeep[nodeId] = e.data.node;
 
-          s.graph.nodes().forEach(function(n) {
-            if (toKeep[n.id])
-              n.color = n.originalColor;
-            else
-              n.color = '#eee';
-          });
+      s.graph.nodes().forEach(function(n) {
+        if (toKeep[n.id])
+          n.color = n.originalColor;
+        else
+          n.color = '#eee';
+      });
 
-          s.graph.edges().forEach(function(e) {
-            if (toKeep[e.source] && toKeep[e.target])
-              e.color = e.originalColor;
-            else
-              e.color = '#eee';
-          });
+      s.graph.edges().forEach(function(e) {
+        if (toKeep[e.source] && toKeep[e.target])
+          e.color = e.originalColor;
+        else
+          e.color = '#eee';
+      });
 
-          // Since the data has been modified, we need to
-          // call the refresh method to make the colors
-          // update effective.
-          s.refresh();
-        });
+      // Since the data has been modified, we need to
+      // call the refresh method to make the colors
+      // update effective.
+      s.refresh();
+    });
 
-        // When the stage is clicked, we just color each
-        // node and edge with its original color.
-        s.bind('clickStage', function(e) {
-          s.graph.nodes().forEach(function(n) {
-            n.color = n.originalColor;
-          });
+    // When the stage is clicked, we just color each
+    // node and edge with its original color.
+    s.bind('clickStage', function(e) {
+      s.graph.nodes().forEach(function(n) {
+        n.color = n.originalColor;
+      });
 
-          s.graph.edges().forEach(function(e) {
-            e.color = e.originalColor;
-          });
+      s.graph.edges().forEach(function(e) {
+        e.color = e.originalColor;
+      });
 
-          // Same as in the previous event:
-          s.refresh();
-        });
+      // Same as in the previous event:
+    s.refresh();
+  })
+
+    /**
+    * This is an example on how to use sigma filters plugin on a real-world graph.
+    */
+    var filter;
+    /**
+    * DOM utility functions
+    */
+    var _ = {
+      $: function (id) {
+        return document.getElementById(id);
+      },
+      all: function (selectors) {
+        return document.querySelectorAll(selectors);
+      },
+      removeClass: function(selectors, cssClass) {
+        var nodes = document.querySelectorAll(selectors);
+        var l = nodes.length;
+        for ( i = 0 ; i < l; i++ ) {
+          var el = nodes[i];
+          // Bootstrap compatibility
+          el.className = el.className.replace(cssClass, '');
+        }
+      },
+      addClass: function (selectors, cssClass) {
+        var nodes = document.querySelectorAll(selectors);
+        var l = nodes.length;
+        for ( i = 0 ; i < l; i++ ) {
+          var el = nodes[i];
+          // Bootstrap compatibility
+          if (-1 == el.className.indexOf(cssClass)) {
+            el.className += ' ' + cssClass;
+          }
+        }
+      },
+      show: function (selectors) {
+        this.removeClass(selectors, 'hidden');
+      },
+      hide: function (selectors) {
+        this.addClass(selectors, 'hidden');
+      },
+      toggle: function (selectors, cssClass) {
+        var cssClass = cssClass || "hidden";
+        var nodes = document.querySelectorAll(selectors);
+        var l = nodes.length;
+        for ( i = 0 ; i < l; i++ ) {
+          var el = nodes[i];
+          //el.style.display = (el.style.display != 'none' ? 'none' : '' );
+          // Bootstrap compatibility
+          if (-1 !== el.className.indexOf(cssClass)) {
+            el.className = el.className.replace(cssClass, '');
+          } else {
+            el.className += ' ' + cssClass;
+          }
+        }
       }
-  start(sig)
+    };
+
+    function updatePane (graph, filter) {
+          categories = {};
+      // read nodes
+      graph.nodes().forEach(function(n) {
+        categories[n.attributes.acategory] = true;
+      })
+      // reset button
+      _.$('reset-btn').addEventListener("click", function(e) {
+        _.$('node-category').selectedIndex = 0;
+        filter.undo().apply();
+        _.$('dump').textContent = '';
+        _.hide('#dump');
+      });
+      // export button
+      _.$('export-btn').addEventListener("click", function(e) {
+        var chain = filter.serialize();
+        console.log(chain);
+        _.$('dump').textContent = JSON.stringify(chain);
+        _.show('#dump');
+      });
+    }
+
+    // Initialize the Filter API
+    filter = sigma.plugins.filter(s);
+    updatePane(s.graph, filter);
+    function applyCategoryFilter(e) {
+      var c = e.target[e.target.selectedIndex].value;
+      filter
+        .undo('node-category')
+        .nodesBy(
+          function(n, options) {
+            console.log(options.property, n.attributes[options.property], c, n.attributes[options.property] === c)
+            return !c.length || n.attributes[options.property] === c;
+          },
+          {
+            property: 'acategory'
+          },
+          'node-category'
+        )
+        .apply();
+    }
+    _.$('node-category').addEventListener("change", applyCategoryFilter);
   </script>
 </body>
 
