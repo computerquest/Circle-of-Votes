@@ -156,7 +156,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 members[info.member_id] = { dw_nominate: info.dw_nominate, name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: key, acategory: 'member' }
             }
 
-            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0'), attributes:{acategory:'master', vote: 'master'}})
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: Object.keys(members).length/2, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0'), attributes:{acategory:'master', vote: 'master'}})
             
             //filter industry
             for (var i = 0; i < Object.keys(topIndustry).length; i++) {
@@ -261,7 +261,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else if (Object.keys(party)[i] == 'D') {
                     cVal = '#0000e6'
                 }
-                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: 3+2*(total/Object.keys(members).length), x: current.x / total, y: current.y / total, attributes:{acategory:'party', party:Object.keys(party)[i], vote: party[Object.keys(party)[i]].vote}}) //todo should change size
+                nodes.push({ id: Object.keys(party)[i], label: Object.keys(party)[i], color: cVal, size: total, x: current.x / total, y: current.y / total, attributes:{acategory:'party', party:Object.keys(party)[i], vote: party[Object.keys(party)[i]].vote}}) //todo should change size
             }
 
             //add industry nodes
@@ -286,7 +286,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     y += -Math.sin(angle) * .1 * (Math.abs(y) / y)
                     console.log(x,y)
                 } */
-                nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: 2+40*(total/Object.keys(members).length), x: x, y: y, attributes:{acategory:'industry', vote:topIndustry[Object.keys(topIndustry)[i]].vote}}) //todo should change size
+                nodes.push({ id: Object.keys(topIndustry)[i], label: Object.keys(topIndustry)[i], color: rgbToHex(Math.round(cVal[0]/total), Math.round(cVal[1]/total),Math.round(cVal[2]/total)), size: total, x: x, y: y, attributes:{acategory:'industry', vote:topIndustry[Object.keys(topIndustry)[i]].vote}}) //todo should change size
             }
 
             //members to industry

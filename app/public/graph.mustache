@@ -221,41 +221,6 @@
           }, 'node-category').apply();
     }
 
-    $('#type :checkbox').change(function(e) {
-      // this represents the checkbox that was checked
-      alert(this.value)
-      // do something with it
-
-       if (this.checked) {
-         var c = this.value
-        // the checkbox is now checked 
-          filter.nodesBy(
-          function(n) {
-            return n.attributes['acategory'] === c || n.attributes['acategory'] == 'master';
-          }, this.value).apply();
-        } else {
-          filter.undo(this.value).apply()
-        }
-    });
-
-    $('#vote :checkbox').change(function(e) {
-      // this represents the checkbox that was checked
-      alert(this.value)
-      // do something with it
-
-       if (this.checked) {
-         var c = this.value
-        // the checkbox is now checked 
-          filter.nodesBy(
-          function(n) {
-            console.log(n.attributes['vote'], c)
-            return n.attributes['vote'] === c || n.attributes['vote'] == 'master';
-          }, this.value).apply();
-        } else {
-          filter.undo(this.value).apply()
-        }
-    });
-    
     filter.nodesBy(
           function(n) {
             return true;
@@ -266,7 +231,6 @@
           }, 'party').apply();
 
     $('input[type=radio][name=voteRadio]').change(function() {
-        alert('change '+ this.value)
         var c = this.value
         filter.undo('vote').nodesBy(
           function(n) {
@@ -275,7 +239,6 @@
     });
 
     $('input[type=radio][name=partyRadio]').change(function() {
-        alert('change '+ this.value)
         var c = this.value
         filter.undo('party').nodesBy(
           function(n) {
