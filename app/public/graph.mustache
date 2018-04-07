@@ -46,14 +46,6 @@
       .green {
         color: #437356;
       }
-      h2.underline {
-        color: #437356;
-        background: #f4f0e4;
-        margin: 0;
-        border-radius: 2px;
-        padding: 8px 12px;
-        font-weight: 700;
-      }
       .hidden {
         display: none;
         visibility: hidden;
@@ -64,29 +56,24 @@
     </style>
     <div id="graph-container"></div>
     <div id="control-pane">
-      <h2 class="underline">filters</h2>
       <div>
-        <h3>node category</h3>
-        <select id="node-category">
-          <option value="" selected>All categories</option>
-          <option value="party" selected>Party</option>
-          <option value="industry" selected>Industry</option>
-          <option value="member" selected>Member</option>
-        </select>
-
+        <h3>Affilition</h3>
         <form id="type">
-          <div class="checkbox">
-            <label><input type="checkbox" value="party">Party</label>
-            <label><input type="checkbox" value="industry">Industry</label>
-            <label><input type="checkbox" value="member">Member</label>
+          <div class="radio">
+            
+            <label><input name='partyRadio' type="radio" value="party">Party</label>
+            <label><input name='partyRadio' type="radio" value="industry">Industry</label>
+            <label><input name='partyRadio' type="radio" value="member">Member</label>
+            <label><input name='partyRadio' type="radio" value="">Reset</label>
           </div>
         </form>
         <form id='vote'>
           <h3>Vote</h3>
-          <div class="checkbox">
-            <label><input type="checkbox" value="Yes">Yes</label>
-            <label><input type="checkbox" value="No">No</label>
-            <label><input type="checkbox" value="Not Voting">Not voting</label>
+          <div class="radio">
+            <label><input name='voteRadio' type="radio" value="Yes">Yes</label>
+            <label><input name='voteRadio' type="radio" value="No">No</label>
+            <label><input name='voteRadio' type="radio" value="Not Voting">Not voting</label>
+            <label><input name='voteRadio' type="radio" value="">Reset</label>
           </div>
         </form>
       </div>
@@ -268,7 +255,33 @@
           filter.undo(this.value).apply()
         }
     });
-    $('#node-category').change(applyCategoryFilter);
+    
+    filter.nodesBy(
+          function(n) {
+            return true;
+          }, 'vote').apply();
+    filter.nodesBy(
+          function(n) {
+            return true;
+          }, 'party').apply();
+
+    $('input[type=radio][name=voteRadio]').change(function() {
+        alert('change '+ this.value)
+        var c = this.value
+        filter.undo('vote').nodesBy(
+          function(n) {
+            return c ==''||n.attributes['vote'] === c || n.attributes['vote'] == 'master';
+          }, 'vote').apply();
+    });
+
+    $('input[type=radio][name=partyRadio]').change(function() {
+        alert('change '+ this.value)
+        var c = this.value
+        filter.undo('party').nodesBy(
+          function(n) {
+            return c==''||n.attributes['acategory'] === c || n.attributes['acategory'] == 'master';
+          }, 'party').apply();
+    });
   </script>
 </body>
 
