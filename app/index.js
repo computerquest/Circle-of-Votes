@@ -128,6 +128,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 var response = sortedResp[i].vote_position;
 
                 if(typeof obj.response === 'undefined') {
+                    members[info.member_id] = { dw_nominate: info.dw_nominate, name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: undefined, acategory: 'member' }
                     continue
                 }
 
@@ -152,12 +153,11 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 }
 
                 topIndustry[key].memberid.push(info.member_id)
-                members[info.member_id] = {dw_nominate: info.dw_nominate,name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: key, acategory: 'member'}
+                members[info.member_id] = { dw_nominate: info.dw_nominate, name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: key, acategory: 'member' }
             }
 
-            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0'), attributes:{acategory:'master'}})
+            nodes.push({ id: 'main', label: req.params.bill, color: '#fff', x: 0, y: 0, size: 5, color: ((!(resp.results.votes.vote.result == 'Passed' | resp.results.votes.vote.result.includes('Agreed')))? '#f00': '#0f0'), attributes:{acategory:'master', vote: 'master'}})
             
-            console.log(Object.keys(members).length)
             //filter industry
             for (var i = 0; i < Object.keys(topIndustry).length; i++) {
                 cIndustry = topIndustry[Object.keys(topIndustry)[i]]
@@ -175,7 +175,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                         topIndustry[Object.keys(topIndustry)[i]].vote = 'Not Voting'
                     }
                 }
-                console.log(Object.keys(members).length)
 
                 for(a = 0; a < topIndustry[Object.keys(topIndustry)[i]].memberid.length; a++) {
                     var info = members[topIndustry[Object.keys(topIndustry)[i]].memberid[a]]
@@ -187,7 +186,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     }
                 }
             }
-            console.log(Object.keys(members).length)
 
             //filter party
             for(var i = 0; i < Object.keys(party).length; i++) {
@@ -201,21 +199,16 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 } else if (current.none / total > .5) {
                     party[Object.keys(party)[i]].vote = 'Not Voting'
                 } else {
-                    console.log('deleting ', Object.keys(party)[i])
                     delete party[Object.keys(party)[i]]
                     i--
                     continue
                 }
 
-                console.log(Object.keys(members).length)
                 for(a = 0; a < party[Object.keys(party)[i]].memberid.length; a++) {
                     var info = members[party[Object.keys(party)[i]].memberid[a]]
-                    console.log(party[Object.keys(party)[i]].memberid[a], members[party[Object.keys(party)[i]].memberid[a]])
-                    console.log(info.vote, party[Object.keys(party)[i]].vote)
                     if(info.acategory == 'member' && info.vote == party[Object.keys(party)[i]].vote) {
                         members[party[Object.keys(party)[i]].memberid[a]].acategory = 'party'
                     } else {
-                        console.log('nope', info.acategory, party[Object.keys(party)[i]].vote, info.vote)
                         party[Object.keys(party)[i]].memberid.splice(a,1)
                         a--
                     }
@@ -225,6 +218,7 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             //add member nodes
             for(i = 0; i < Object.keys(members).length; i++) {
                 var info = members[Object.keys(members)[i]]
+                console.log(info.acategory)
                 var cVal = [0, 0, 0]
                 
                 change = Math.round(Math.abs(100*info.dw_nominate))
@@ -251,8 +245,9 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     topIndustry[info.industry].y += y
                 }
                 members[Object.keys(members)[i]].color = cVal
+                console.log(info.vote)
                 //coloring needs to reflect vote not party
-                nodes.push({id: Object.keys(members)[i], label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y, attributes:{acategory:'member', vote:info.vote, party:info.party, attributes: {acategory: info.acategory}}})
+                nodes.push({id: Object.keys(members)[i], label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y, attributes:{acategory: info.acategory, vote:info.vote, party:info.party}})
             }
 
             //add party nodes

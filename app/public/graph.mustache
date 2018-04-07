@@ -73,6 +73,22 @@
           <option value="industry" selected>Industry</option>
           <option value="member" selected>Member</option>
         </select>
+
+        <form id="type">
+          <div class="checkbox">
+            <label><input type="checkbox" value="party">Party</label>
+            <label><input type="checkbox" value="industry">Industry</label>
+            <label><input type="checkbox" value="member">Member</label>
+          </div>
+        </form>
+        <form id='vote'>
+          <h3>Vote</h3>
+          <div class="checkbox">
+            <label><input type="checkbox" value="Yes">Yes</label>
+            <label><input type="checkbox" value="No">No</label>
+            <label><input type="checkbox" value="Not Voting">Not voting</label>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -212,14 +228,46 @@
     function applyCategoryFilter(e) {
       var c = e.target[e.target.selectedIndex].value;
       filter.undo('node-category')
-      if(c != '') {
-        filter.nodesBy(
-            function(n) {
-              return n.attributes['acategory'] === c || n.attributes['acategory'] == 'master';
-            }, 'node-category').apply();
-      }
+      filter.nodesBy(
+          function(n) {
+            return n.attributes['acategory'] === c || n.attributes['acategory'] == 'master' || c=='';
+          }, 'node-category').apply();
     }
 
+    $('#type :checkbox').change(function(e) {
+      // this represents the checkbox that was checked
+      alert(this.value)
+      // do something with it
+
+       if (this.checked) {
+         var c = this.value
+        // the checkbox is now checked 
+          filter.nodesBy(
+          function(n) {
+            return n.attributes['acategory'] === c || n.attributes['acategory'] == 'master';
+          }, this.value).apply();
+        } else {
+          filter.undo(this.value).apply()
+        }
+    });
+
+    $('#vote :checkbox').change(function(e) {
+      // this represents the checkbox that was checked
+      alert(this.value)
+      // do something with it
+
+       if (this.checked) {
+         var c = this.value
+        // the checkbox is now checked 
+          filter.nodesBy(
+          function(n) {
+            console.log(n.attributes['vote'], c)
+            return n.attributes['vote'] === c || n.attributes['vote'] == 'master';
+          }, this.value).apply();
+        } else {
+          filter.undo(this.value).apply()
+        }
+    });
     $('#node-category').change(applyCategoryFilter);
   </script>
 </body>
