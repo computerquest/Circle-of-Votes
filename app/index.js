@@ -18,7 +18,7 @@ var clientO = new OpenSecretsClient('8fad4c535bd7763204689b57c70137fd'); //the j
 var opKeys = ['8fad4c535bd7763204689b57c70137fd', 'd54dbd5a4f572862c2609aab9487a365', 'f8cea77db428d13c088ac8afff35e519', 'be091217e1dd3b340e2511e38699efa7', 'db37558aa3f970cadfb8345c26d1dde6','5928e99d96fac2a30906a126a293714d', '1ad00b500ae4d8a0a3333c7e1689eebb', 'c29969ede23d4f4871205c97548a8290', '2d87571b3707af874843d8e9f3391666']
 
 app.use(express.static('public'))
-app.listen(9000, () => console.log('Example app listening on port 3000!'))
+app.listen(9000, () => console.log('Example app listening!'))
 
 app.get('/about', function(req, res) {
     res.setHeader('Content-Type', 'text/html')
@@ -94,7 +94,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     res.setHeader('Content-Type', 'text/html')
     ppc.getBill(req.params.bill, req.params.congress).then(function (value) {
         var str = ''+value.results[0].votes[req.params.vote].api_url;
-        console.log(str)
         var arr = str.split("/");
         var nodes = [];
         var edges = []
@@ -218,7 +217,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             //add member nodes
             for(i = 0; i < Object.keys(members).length; i++) {
                 var info = members[Object.keys(members)[i]]
-                console.log(info.acategory)
                 var cVal = [0, 0, 0]
                 
                 change = Math.round(Math.abs(100*info.dw_nominate))
@@ -245,7 +243,6 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     topIndustry[info.industry].y += y
                 }
                 members[Object.keys(members)[i]].color = cVal
-                console.log(info.vote)
                 //coloring needs to reflect vote not party
                 nodes.push({id: Object.keys(members)[i], label: info.name+' ('+info.party+')', color: rgbToHex(cVal[0],cVal[1],cVal[2]), size: 1, x: x, y: y, attributes:{acategory: info.acategory, vote:info.vote, party:info.party}})
             }
@@ -293,12 +290,8 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             for (var i = 0; i < Object.keys(topIndustry).length; i++) {
                 currentIndustry = topIndustry[Object.keys(topIndustry)[i]].memberid
                 for(var a = 0; a < currentIndustry.length; a++) {  
-                    cVal = '#ffff80'
-                    if (members[currentIndustry[a]].party == 'D') {
-                        cVal = '#99b3ff'
-                    } else if (members[currentIndustry[a]].party == 'R') {
-                        cVal = '#ff8080'
-                    }
+                    cVal = rgbToHex(members[currentIndustry[a]].color[0], members[currentIndustry[a]].color[1], members[currentIndustry[a]].color[2])
+
                     edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(topIndustry)[i], source: currentIndustry[a], target: Object.keys(topIndustry)[i], color: cVal})
                 }
             }
@@ -318,14 +311,8 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
             for (var i = 0; i < Object.keys(party).length; i++) {
                 currentIndustry = party[Object.keys(party)[i]].memberid
                 
-                cVal = '#ffff80'
-                if (Object.keys(party)[i] == 'D') {
-                    cVal = '#99b3ff'
-                } else if (Object.keys(party)[i] == 'R') {
-                    cVal = '#ff8080'
-                }
-
                 for (var a = 0; a < currentIndustry.length; a++) {
+                    cVal = rgbToHex(members[currentIndustry[a]].color[0], members[currentIndustry[a]].color[1], members[currentIndustry[a]].color[2])
                     edges.push({ id: 'e' + currentIndustry[a] + '.' + Object.keys(party)[i], source: currentIndustry[a], target: Object.keys(party)[i], color: cVal})
                 }
             }
@@ -372,7 +359,8 @@ app.get('/datarefresh', function (req, res) {
     recieveData(114)
     recieveData(115)
 
-    res.redirect('../index.html')
+    console.log('finished')
+    res.redirect('/index.html')
 })
 
 function recieveData(congress) {
@@ -408,7 +396,6 @@ function writingCallback(pos, overallData, congress) {
     localClient.makeRequest('candIndustry', { cid: overallData.crp_id, cycle: year, output: 'json'})
     .on('complete', function (input) {
         if (input instanceof Error) console.log('Something went wrong');
-        console.log('3xx '+ pos + ' '+ overallData)
         val = verifiedJSON(input)
         if(!val.bad) {
             overallData = mergeJSON.merge(overallData, JSON.parse(input))
@@ -419,7 +406,6 @@ function writingCallback(pos, overallData, congress) {
         fs.writeFile('./app/persistentdata/' + overallData.id + '.' + congress + '.json', JSON.stringify(overallData), function (err) {
             if (err) throw err;
         });
-        console.log('finished process')
     })
 }
 
