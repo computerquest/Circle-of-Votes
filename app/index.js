@@ -32,7 +32,9 @@ app.get('/search/:query', function(req, res) {
         submit = { bills: [] }
         goodStuff = val.results[0].bills
         for (i = 0; i < goodStuff.length; i++) {
-            submit.bills.push({ slug: goodStuff[i].bill_slug, link: '../billinfo/' + goodStuff[i].bill_slug, name: ((goodStuff[i].short_title == null) ? goodStuff[i].title: goodStuff[i].short_title), summary: ((goodStuff[i].summary_short == "") ? 'Not provided' : goodStuff[i].summary_short), lastDate: goodStuff[i].latest_major_action_date, housePass: ((goodStuff[i].house_passage == null) ? 'not passed' : goodStuff[i].house_passage), senatePass: ((goodStuff[i].senate_passage == null) ? 'not passed' : goodStuff[i].senate_passage) })
+            var str = goodStuff[i].bill_id
+            var arr = str.split("-")
+            submit.bills.push({ slug: goodStuff[i].bill_slug, link: '/billinfo/'+arr[1]+'/' + goodStuff[i].bill_slug, name: ((goodStuff[i].short_title == null) ? goodStuff[i].title: goodStuff[i].short_title), summary: ((goodStuff[i].summary_short == "") ? 'Not provided' : goodStuff[i].summary_short), lastDate: goodStuff[i].latest_major_action_date, housePass: ((goodStuff[i].house_passage == null) ? 'not passed' : goodStuff[i].house_passage), senatePass: ((goodStuff[i].senate_passage == null) ? 'not passed' : goodStuff[i].senate_passage) })
         }
         res.render('index.mustache', submit)
     })
@@ -48,7 +50,7 @@ app.get('/home', function(req, res) {
         for (i = 0; i < goodStuff.length; i++) {
             var str = goodStuff[i].bill.bill_id
             var arr = str.split("-")
-            submit.bills.push({pass:((goodStuff[i].result.includes('Pass') || goodStuff[i].result.includes('Agreed'))? true:false),result: goodStuff[i].result, slug:goodStuff[i].chamber+' | '+ arr[0], link: '../billinfo/' + arr[0], name: goodStuff[i].bill.title, summary: ((goodStuff[i].description=='')? 'None provided':goodStuff[i].description), lastDate: ((null==goodStuff[i].bill.latest_action)? 'None provided':goodStuff[i].bill.latest_action)})
+            submit.bills.push({pass:((goodStuff[i].result.includes('Pass') || goodStuff[i].result.includes('Agreed'))? true:false),result: goodStuff[i].result, slug:goodStuff[i].chamber+' | '+ arr[0], link: '/billinfo/'+goodStuff[0].congress+'/' + arr[0], name: goodStuff[i].bill.title, summary: ((goodStuff[i].description=='')? 'None provided':goodStuff[i].description), lastDate: ((null==goodStuff[i].bill.latest_action)? 'None provided':goodStuff[i].bill.latest_action)})
         }
         res.render('index.mustache', submit)
     })
@@ -58,9 +60,9 @@ app.get('/home/:chamber', function (req, res) {
     res.redirect('/home')
 })
 
-app.get('/billinfo/:billId', function (req, res) {
+app.get('/billinfo/:congress/:billId', function (req, res) {
     res.setHeader('Content-Type', 'text/html')
-    p = ppc.getBill(req.params.billId).then(function (val) {
+    p = ppc.getBill(req.params.billId, { congress: req.params.congress}).then(function (val) {
         if(typeof val.results === 'undefined') {
             res.sendFile(__dirname+'/public/error.html')
             return
@@ -92,13 +94,13 @@ function rgbToHex(r, g, b) {
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     console.log('starting')
     res.setHeader('Content-Type', 'text/html')
-    ppc.getBill(req.params.bill, req.params.congress).then(function (value) {
+    ppc.getBill(req.params.bill, {congress:req.params.congress}).then(function (value) {
         var str = ''+value.results[0].votes[req.params.vote].api_url;
         var arr = str.split("/");
         var nodes = [];
         var edges = []
         var members = {}
-        ppc.getRollCallVotes(arr[6], arr[8], arr[10].replace('.json', ''), arr[5]).then(function(resp){
+        ppc.getRollCallVotes(arr[6], arr[8], arr[10].replace('.json', ''), {congress:arr[5]}).then(function(resp){
             //sort nodes by parties
             var sortedResp = resp.results.votes.vote.positions.sort(function(a, b) {
                 return a.party.charCodeAt(0)-b.party.charCodeAt(0);
@@ -360,12 +362,12 @@ app.get('/datarefresh', function (req, res) {
     recieveData(115)
 
     console.log('finished')
-    res.redirect('/index.html')
+    res.redirect('/home')
 })
 
 function recieveData(congress) {
-    var first = ppc.getMemberList('house', congress)
-    var firstS = ppc.getMemberList('senate', congress)
+    var first = ppc.getMemberList('house', {congress:congress})
+    var firstS = ppc.getMemberList('senate', {congress:congress})
     var overall = {}
     Promise.all([first, firstS]).then(function (valAr) {
         for (var a = 0; a < valAr.length; a++) {
@@ -399,13 +401,12 @@ function writingCallback(pos, overallData, congress) {
         val = verifiedJSON(input)
         if(!val.bad) {
             overallData = mergeJSON.merge(overallData, JSON.parse(input))
+            fs.writeFile('./app/persistentdata/' + overallData.id + '.' + congress + '.json', JSON.stringify(overallData), function (err) {
+                if (err) throw err;
+            });
         } else {
             console.log('bad id was '+ overallData.id +' crp: '+ overallData.crp_id)
         } 
-
-        fs.writeFile('./app/persistentdata/' + overallData.id + '.' + congress + '.json', JSON.stringify(overallData), function (err) {
-            if (err) throw err;
-        });
     })
 }
 
