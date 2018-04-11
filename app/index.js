@@ -49,6 +49,10 @@ app.get('/home', function(req, res) {
         goodStuff = body.results.votes
         for (i = 0; i < goodStuff.length; i++) {
             var str = goodStuff[i].bill.bill_id
+            console.log(str)
+            if (typeof str === 'undefined') {
+                continue
+            }
             var arr = str.split("-")
             submit.bills.push({pass:((goodStuff[i].result.includes('Pass') || goodStuff[i].result.includes('Agreed'))? true:false),result: goodStuff[i].result, slug:goodStuff[i].chamber+' | '+ arr[0], link: '/billinfo/'+goodStuff[0].congress+'/' + arr[0], name: goodStuff[i].bill.title, summary: ((goodStuff[i].description=='')? 'None provided':goodStuff[i].description), lastDate: ((null==goodStuff[i].bill.latest_action)? 'None provided':goodStuff[i].bill.latest_action)})
         }
