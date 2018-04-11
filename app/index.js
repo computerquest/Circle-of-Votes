@@ -49,7 +49,6 @@ app.get('/home', function(req, res) {
         goodStuff = body.results.votes
         for (i = 0; i < goodStuff.length; i++) {
             var str = goodStuff[i].bill.bill_id
-            console.log(str)
             if (typeof str === 'undefined') {
                 continue
             }

@@ -38,9 +38,8 @@
         {{/actionPresent}}
         {{#actions}}
             <div class='card' style='margin-bottom: 1%; margin-left: 5%'>
-                <h5 class='card-header'>{{chamber}}</h5>
+                <h5 class='card-header'>{{chamber}} | {{type}}</h5>
                 <div class='card-body'>
-                    <h5 class='card-title'>{{type}}</h5>
                     <div class='card-text'>
                         <p>{{date}}</p>                    
                         <p>{{description}}</p>
@@ -49,17 +48,17 @@
             </div>
         {{/actions}}
         {{#votePresent}}
-        <h3>Votes:</h3>
+        <h3 id="voteSection">Votes:</h3>
         {{/votePresent}}
         {{#vote}}
-            <div class='card {{#pass}}text-white bg-success{{/pass}} {{^pass}}text-white bg-danger{{/pass}}' style='margin-botton: 1%; margin-left: 5%'>
+            <div class='card {{#pass}}text-white bg-success{{/pass}} {{^pass}}text-white bg-danger{{/pass}}' style='margin-bottom: 1%; margin-left: 5%'>
                 <h5 class='card-header'>{{chamber}}</h5>
                 <div class='card-body'>
                     <h5 class='card-title'>{{result}}</p>
                     <div class='card-text'>
                         <p>{{date}}</p>                    
                         <p>{{question}}</p> 
-                        <a href="{{link}}" class="btn btn-primary">View Graph</a>
+                        <a href="{{link}}" class="btn btn-outline-light">View Graph</a>
                     </div>
                 </div>
             </div>
