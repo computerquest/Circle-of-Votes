@@ -35,8 +35,8 @@
                         <p>Senate Pass: {{senatePass}} and House Pass: {{housePass}}</p>
                     {{/singleVote}}
                 </div>
-                <a href='{{link}}' class='btn btn-outline-light'>See details</a>
-                <a href='{{link}}#voteSection' style='margin-left: 1%' class='btn btn-outline-light'>See Votes</a>
+                <a href='{{link}}' class='btn {{#singleVote}}btn-outline-light{{/singleVote}} {{^singleVote}}btn-outline-dark{{/singleVote}}'>See details</a>
+                <a href='{{link}}#voteSection' style='margin-left: 1%' class='btn {{#singleVote}}btn-outline-light{{/singleVote}}{{^singleVote}}btn-outline-dark{{/singleVote}}'>See Votes</a>
             </div>
         </div>
     {{/bills}}
