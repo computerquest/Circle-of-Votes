@@ -96,6 +96,7 @@ function rgbToHex(r, g, b) {
 
 app.get('/graphs/:congress/:bill/:vote', function (req, res) {
     console.log('starting')
+    numberError = 0
     res.setHeader('Content-Type', 'text/html')
     ppc.getBill(req.params.bill, {congress:req.params.congress}).then(function (value) {
         var str = ''+value.results[0].votes[req.params.vote].api_url;
@@ -103,6 +104,13 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
         var nodes = [];
         var edges = []
         var members = {}
+        yes = 0
+        nv = 0
+        no = 0
+        numParty = 0
+        numIndustry = 0
+        industryM = 0
+        partyM = 0
         ppc.getRollCallVotes(arr[6], arr[8], arr[10].replace('.json', ''), {congress:arr[5]}).then(function(resp){
             //sort nodes by parties
             var sortedResp = resp.results.votes.vote.positions.sort(function(a, b) {
@@ -121,17 +129,26 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                 
                 if (info.vote_position == 'Yes') {
                     party[info.party].yes++
+                    yes++
                 } else if (info.vote_position == 'No') {
+                    no++
                     party[info.party].no++
                 } else {
+                    nv++
                     party[info.party].none++
                 }
 
-                var obj = JSON.parse(fs.readFileSync('./app/persistentdata/' + info.member_id + '.' + req.params.congress +'.json', 'utf8'));
+                var obj;
+                try {
+                    obj = JSON.parse(fs.readFileSync('./app/persistentdata/' + info.member_id + '.' + req.params.congress +'.json', 'utf8'));
+                  } catch (err) {
+                    console.log('error finding member')
+                    numberError++
+                  }
                 
                 var response = sortedResp[i].vote_position;
 
-                if(typeof obj.response === 'undefined') {
+                if(typeof obj === 'undefined' || typeof obj.response === 'undefined') {
                     members[info.member_id] = { dw_nominate: info.dw_nominate, name: info.name, color: cVal, vote: info.vote_position, party: info.party, industry: undefined, acategory: 'member' }
                     continue
                 }
@@ -218,6 +235,16 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                     }
                 }
             }          
+
+            for(i = 0; i < Object.keys(party).length; i++) {
+                numParty++
+                partyM += party[Object.keys(party)[i]].memberid.length
+            }
+
+            for(i = 0; i < Object.keys(topIndustry).length; i++) {
+                numIndustry++
+                industryM += topIndustry[Object.keys(topIndustry)[i]].memberid.length
+            }
 
             //add member nodes
             for(i = 0; i < Object.keys(members).length; i++) {
@@ -351,7 +378,8 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
         }).then(function(value) {
             solution = { "nodes": nodes, "edges": edges }
             console.log('returning graph')
-            res.render('graph.mustache', { data: JSON.stringify(solution) })
+            sum = yes+no+nv
+            res.render('graph.mustache', { data: JSON.stringify(solution), error: numberError, wereError: ((numberError==0)? false: true), yes: Math.round(yes/sum*100), no: Math.round(no/sum*100), nv: Math.round(nv/sum*100), ni: numIndustry, nip: Math.round(industryM/sum*100), np: numParty, npp: Math.round(partyM/sum*100)})
         })
     })
 })

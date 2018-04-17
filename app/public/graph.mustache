@@ -1,7 +1,13 @@
 <html>
 <head>
   <title>Graph</title>
+  
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </head>
+
 
 <body style="padding: 0px; margin: 0px;">
   <div id="container">
@@ -9,7 +15,6 @@
       body {
         color: black;
         font-size: 14px;
-        font-family: Lato, sans-serif;
       }
       #graph-container {
         top: 0;
@@ -23,12 +28,12 @@
         /*bottom: 10px;*/
         right: 10px;
         position: absolute;
-        width: 230px;
+        width: 330px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       }
       #control-pane > div {
         margin: 10px;
-        overflow-x: auto;
+        overflow-x: hidden;
       }
       .line {
         clear: both;
@@ -38,10 +43,6 @@
         padding: 12px 0 0 0;
         border-bottom: 1px solid #aac789;
         background: transparent;
-      }
-      h2, h3, h4 {
-        padding: 0;
-        font-variant: small-caps;
       }
       .green {
         color: #437356;
@@ -57,25 +58,32 @@
     <div id="graph-container"></div>
     <div id="control-pane">
       <div>
-        <h3>Affilition</h3>
-        <form id="type">
-          <div class="radio">
-            
-            <label><input name='partyRadio' type="radio" value="party">Party</label>
-            <label><input name='partyRadio' type="radio" value="industry">Industry</label>
-            <label><input name='partyRadio' type="radio" value="member">Member</label>
-            <label><input name='partyRadio' type="radio" value="">Reset</label>
+        <h3>Affiliation</h3>
+        <form  style='margin-left: 15px'id="type">
+          <div class="btn-group btn-group-toggle" data-toggle="buttons">            
+            <label class="btn btn-secondary btn-transparent"><input name='partyRadio' type="radio" value="party">Party</label>
+            <label class="btn btn-secondary"><input name='partyRadio' type="radio" value="industry">Industry</label>
+            <label class="btn btn-secondary"><input name='partyRadio' type="radio" value="member">Member</label>
+            <label class="btn btn-secondary active"><input name='partyRadio' type="radio" value="" checked>Reset</label>
           </div>
         </form>
         <form id='vote'>
           <h3>Vote</h3>
-          <div class="radio">
-            <label><input name='voteRadio' type="radio" value="Yes">Yes</label>
-            <label><input name='voteRadio' type="radio" value="No">No</label>
-            <label><input name='voteRadio' type="radio" value="Not Voting">Not voting</label>
-            <label><input name='voteRadio' type="radio" value="">Reset</label>
+          <div class="btn-group btn-group-toggle" style='margin-left: 15px' data-toggle="buttons">
+            <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="Yes">Yes</label>
+            <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="No">No</label>
+            <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="Not Voting">Not voting</label>
+            <label class="btn btn-secondary active"><input name='voteRadio' type="radio" value="" checked>Reset</label>
           </div>
         </form>
+        {{#wereError}}<p style='color:#ff3333'>There were {{error}} problem(s) when loading this</p>{{/wereError}}   
+        <button class="btn btn-outline-dark" type="button" data-toggle="collapse" data-target="#demo" aria-expanded="false" aria-controls="demo">Meta</button>
+        <div id="demo" class='collapse'>
+            <hr>
+            <p>Yes: {{yes}}%, No: {{no}}%, Not voting: {{nv}}%</p>
+            <p>Number of industries: {{ni}}, Member influence: {{nip}}%</p>
+            <p>Number of parties: {{np}}, Member influence: {{npp}}%</p>
+        </div> 
       </div>
     </div>
   </div>
@@ -129,7 +137,6 @@
   <script src="/sigma.js/plugins/sigma.parsers.gexf/gexf-parser.js"></script>
   <script src="/sigma.js/plugins/sigma.parsers.gexf/sigma.parsers.gexf.js"></script>
   <script src="/sigma.js/plugins/sigma.plugins.filter/sigma.plugins.filter.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script>
     // Add a method to the graph model that returns an
     // object with every neighbors of a node inside:

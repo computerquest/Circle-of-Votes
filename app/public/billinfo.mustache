@@ -1,11 +1,10 @@
 <html>
 <head>
 <title>{{name}}</title>
-<!-- Latest compiled and minified CSS -->
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<!-- Latest compiled and minified JavaScript -->
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </head>
 
 <body>
@@ -33,20 +32,7 @@
             {{#actionShow}}<p>Senate: {{senatePass}} and House: {{housePass}}</p>{{/actionShow}}
             {{^actionShow}}<p>Has not been passed</p>{{/actionShow}}
         </div>
-        {{#actionPresent}}
-        <h3>Action:</h3>
-        {{/actionPresent}}
-        {{#actions}}
-            <div class='card' style='margin-bottom: 1%; margin-left: 5%'>
-                <h5 class='card-header'>{{chamber}} | {{type}}</h5>
-                <div class='card-body'>
-                    <div class='card-text'>
-                        <p>{{date}}</p>                    
-                        <p>{{description}}</p>
-                    </div>
-                </div>
-            </div>
-        {{/actions}}
+        
         {{#votePresent}}
         <h3 id="voteSection">Votes:</h3>
         {{/votePresent}}
@@ -63,6 +49,21 @@
                 </div>
             </div>
         {{/vote}}
+        
+        {{#actionPresent}}
+        <h3>Action:</h3>
+        {{/actionPresent}}
+        {{#actions}}
+            <div class='card' style='margin-bottom: 1%; margin-left: 5%'>
+                <h5 class='card-header'>{{chamber}} | {{type}}</h5>
+                <div class='card-body'>
+                    <div class='card-text'>
+                        <p>{{date}}</p>                    
+                        <p>{{description}}</p>
+                    </div>
+                </div>
+            </div>
+        {{/actions}}
     </div>
 </div>
 </body>
