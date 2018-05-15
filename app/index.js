@@ -25,6 +25,9 @@ app.get('/about', function(req, res) {
     res.sendFile(__dirname+'/public/about.html')
 })
 
+app.get('/', function(req, res) {
+    res.redirect('/home')
+})
 app.get('/search/:query', function(req, res) {
     request({ url: 'https://api.propublica.org/congress/v1/bills/search.json?query='+req.params.query+'&sort=_score', headers: { 'X-API-Key': 'CfNPRL9q6wPC8iEHEG4PhZk9xiQbcWSTvVFjqItF' } }, function (err, lRes, body) {
         res.setHeader('Content-Type', 'text/html')    
@@ -519,3 +522,7 @@ app.get('/testing', function (req, res) {
         }
     })
 })
+
+app.use(function(req, res){
+    res.sendFile(__dirname+'/public/error.html');
+});
