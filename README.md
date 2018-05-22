@@ -1,4 +1,4 @@
-Url: http://18.216.244.60/home/house
+Url: https://circle-of-votes.herokuapp.com/home
 Description 
 
    Since the beginning of democracy there have always been concerns about the influence of money upon the representatives of the people. Today this most common form of this is campaign contributions. This website aims to help visualize the influence of industry through campaign contributions on the votes of representatives and because of the wide implications of this visualization, it can be applied to make other conclusions such as partisan voting.
