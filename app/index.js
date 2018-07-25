@@ -237,7 +237,35 @@ app.get('/graphs/:congress/:bill/:vote', function (req, res) {
                         a--
                     }
                 }
-            }          
+            }
+
+
+            for(var i = 0; i < Object.keys(topIndustry).length; i++) {
+                cIndustry = topIndustry[Object.keys(topIndustry)[i]]
+                var allSame = true;
+                var sParty = members[cIndustry.memberid[0]].party
+                for(var a = 1; a < cIndustry.memberid.length; a++) {
+                    if(members[cIndustry.memberid[a]].party != sParty) {
+                        allSame = false;
+                    }
+                }
+                var pVote = party[Object.keys(party)[0]].vote
+                var partySame = true;
+                for(var a = 1; a < Object.keys(party)[0]; a++) {
+                    if(pVote != party[Object.keys(party)[a]].vote) {
+                        partySame = false;
+                    }
+                }
+                if (allSame | partySame && party[sParty].vote == cIndustry.vote){
+                    for(a = 0; a < topIndustry[Object.keys(topIndustry)[i]].memberid.length; a++) {
+                        members[topIndustry[Object.keys(topIndustry)[i]].memberid[a]].acategory = 'party'
+                        party[members[topIndustry[Object.keys(topIndustry)[i]].memberid[a]].party].memberid.push(topIndustry[Object.keys(topIndustry)[i]].memberid[a])
+                    }
+
+                    delete topIndustry[Object.keys(topIndustry)[i]]
+                    i--
+                }
+            }
 
             for(i = 0; i < Object.keys(party).length; i++) {
                 numParty++
