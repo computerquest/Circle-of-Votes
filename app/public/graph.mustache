@@ -1,183 +1,216 @@
 <html>
 <head>
-  <title>Graph</title>
-  
-  <!-- Latest compiled and minified CSS -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
-
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-117836235-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-117836235-1');
-</script>
-
+    <title>Graph</title>
+    <link rel="stylesheet"
+          href="https://unpkg.com/bootstrap-material-design@4.1.1/dist/css/bootstrap-material-design.min.css"
+          integrity="sha384-wXznGJNEXNG1NFsbm0ugrLFMQPWswR3lds2VeinahP8N0zJw9VWSopbjv2x7WCvX" crossorigin="anonymous">
 </head>
 
 
 <body style="padding: 0px; margin: 0px;">
-  <div id="container">
+<div id="container">
     <style>
-      body {
-        color: black;
-        font-size: 14px;
-      }
-      #graph-container {
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        position: absolute;
-      }
-      #control-pane {
-        top: 10px;
-        /*bottom: 10px;*/
-        right: 10px;
-        position: absolute;
-        width: 330px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      }
-      #control-pane > div {
-        margin: 10px;
-        overflow-x: hidden;
-      }
-      .line {
-        clear: both;
-        display: block;
-        width: 100%;
-        margin: 0;
-        padding: 12px 0 0 0;
-        border-bottom: 1px solid #aac789;
-        background: transparent;
-      }
-      .green {
-        color: #437356;
-      }
-      .hidden {
-        display: none;
-        visibility: hidden;
-      }
-      input[type=range] {
-        width: 160px;
-      }
+        body {
+            color: black;
+            font-size: 14px;
+        }
+
+        #graph-container {
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            position: absolute;
+        }
+
+        #control-pane {
+            top: 10px;
+            /*bottom: 10px;*/
+            right: 10px;
+            position: absolute;
+            width: 375px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        #control-pane > div {
+            margin: 10px;
+        }
+
+        .line {
+            clear: both;
+            display: block;
+            width: 100%;
+            margin: 0;
+            padding: 12px 0 0 0;
+            border-bottom: 1px solid #aac789;
+            background: transparent;
+        }
+
+        .green {
+            color: #437356;
+        }
+
+        .hidden {
+            display: none;
+            visibility: hidden;
+        }
+
+        input[type=range] {
+            width: 160px;
+        }
+
+        input[type=radio] {
+            position: fixed;
+            opacity: 0;
+        }
     </style>
     <div id="graph-container"></div>
     <div id="control-pane">
-      <div>
-        <h3>Affiliation</h3>
-        <form  style='margin-left: 15px'id="type">
-          <div class="btn-group btn-group-toggle" data-toggle="buttons">            
-            <label class="btn btn-secondary btn-transparent"><input name='partyRadio' type="radio" value="party">Party</label>
-            <label class="btn btn-secondary"><input name='partyRadio' type="radio" value="industry">Industry</label>
-            <label class="btn btn-secondary"><input name='partyRadio' type="radio" value="member">Member</label>
-            <label class="btn btn-secondary active"><input name='partyRadio' type="radio" value="" checked>Reset</label>
-          </div>
-        </form>
-        <form id='vote'>
-          <h3>Vote</h3>
-          <div class="btn-group btn-group-toggle" style='margin-left: 15px' data-toggle="buttons">
-            <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="Yes">Yes</label>
-            <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="No">No</label>
-            <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="Not Voting">Not voting</label>
-            <label class="btn btn-secondary active"><input name='voteRadio' type="radio" value="" checked>Reset</label>
-          </div>
-        </form>
-        {{#wereError}}<p style='color:#ff3333'>There were {{error}} problem(s) when loading this</p>{{/wereError}}   
-        <button class="btn btn-outline-dark" type="button" data-toggle="collapse" data-target="#demo" aria-expanded="false" aria-controls="demo">Meta</button>
-        <div id="demo" class='collapse'>
-            <hr>
-            <p>Yes: {{yes}}%, No: {{no}}%, Not voting: {{nv}}%</p>
-            <p>Number of industries: {{ni}}, Member influence: {{nip}}%</p>
-            <p>Number of parties: {{np}}, Member influence: {{npp}}%</p>
-        </div> 
-      </div>
+        <div>
+            <h3>Affiliation</h3>
+            <form id="type">
+                <div class="btn-group btn-group-toggle" style='margin-left: 15px' data-toggle="buttons">
+                    <label class="btn btn-secondary btn-transparent"><input name='partyRadio' type="radio"
+                                                                            value="party">Party</label>
+                    <label class="btn btn-secondary"><input name='partyRadio' type="radio"
+                                                            value="industry">Industry</label>
+                    <label class="btn btn-secondary"><input name='partyRadio' type="radio" value="member">Member</label>
+                    <label class="btn btn-secondary active"><input name='partyRadio' type="radio" value="" checked>Reset</label>
+                </div>
+            </form>
+            <form id='vote'>
+                <h3>Vote</h3>
+                <div class="btn-group btn-group-toggle" style='margin-left: 15px' data-toggle="buttons">
+                    <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="Yes">Yes</label>
+                    <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="No">No</label>
+                    <label class="btn btn-secondary"><input name='voteRadio' type="radio" value="Not Voting">Not voting</label>
+                    <label class="btn btn-secondary active"><input name='voteRadio' type="radio" value="" checked>Reset</label>
+                </div>
+            </form>
+            {{#wereError}}<p style='color:#ff3333'>There were {{error}} problem(s) when loading this</p>{{/wereError}}
+            <button class="btn btn-outline-dark" type="button" data-toggle="collapse" data-target="#demo"
+                    aria-expanded="false" aria-controls="demo">Meta
+            </button>
+            <div id="demo" class='collapse'>
+                <hr>
+                <p>Yes: {{yes}}%, No: {{no}}%, Not voting: {{nv}}%</p>
+                <p>Number of industries: {{ni}}, Member influence: {{nip}}%</p>
+                <p>Number of parties: {{np}}, Member influence: {{npp}}%</p>
+            </div>
+        </div>
     </div>
-  </div>
-  <script src="/sigma.js/src/sigma.core.js"></script>
-  <script src="/sigma.js/src/conrad.js"></script>
-  <script src="/sigma.js/src/utils/sigma.utils.js"></script>
-  <script src="/sigma.js/src/utils/sigma.polyfills.js"></script>
-  <script src="/sigma.js/src/sigma.settings.js"></script>
-  <script src="/sigma.js/src/classes/sigma.classes.dispatcher.js"></script>
-  <script src="/sigma.js/src/classes/sigma.classes.configurable.js"></script>
-  <script src="/sigma.js/src/classes/sigma.classes.graph.js"></script>
-  <script src="/sigma.js/src/classes/sigma.classes.camera.js"></script>
-  <script src="/sigma.js/src/classes/sigma.classes.quad.js"></script>
-  <script src="/sigma.js/src/classes/sigma.classes.edgequad.js"></script>
-  <script src="/sigma.js/src/captors/sigma.captors.mouse.js"></script>
-  <script src="/sigma.js/src/captors/sigma.captors.touch.js"></script>
-  <script src="/sigma.js/src/renderers/sigma.renderers.canvas.js"></script>
-  <script src="/sigma.js/src/renderers/sigma.renderers.webgl.js"></script>
-  <script src="/sigma.js/src/renderers/sigma.renderers.svg.js"></script>
-  <script src="/sigma.js/src/renderers/sigma.renderers.def.js"></script>
-  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.nodes.def.js"></script>
-  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.nodes.fast.js"></script>
-  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.def.js"></script>
-  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.fast.js"></script>
-  <script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.arrow.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.labels.def.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.hovers.def.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.nodes.def.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.def.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.curve.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.arrow.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.curvedArrow.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.def.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.curve.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.arrow.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.curvedArrow.js"></script>
-  <script src="/sigma.js/src/renderers/canvas/sigma.canvas.extremities.def.js"></script>
-  <script src="/sigma.js/src/renderers/svg/sigma.svg.utils.js"></script>
-  <script src="/sigma.js/src/renderers/svg/sigma.svg.nodes.def.js"></script>
-  <script src="/sigma.js/src/renderers/svg/sigma.svg.edges.def.js"></script>
-  <script src="/sigma.js/src/renderers/svg/sigma.svg.edges.curve.js"></script>
-  <script src="/sigma.js/src/renderers/svg/sigma.svg.labels.def.js"></script>
-  <script src="/sigma.js/src/renderers/svg/sigma.svg.hovers.def.js"></script>
-  <script src="/sigma.js/src/middlewares/sigma.middlewares.rescale.js"></script>
-  <script src="/sigma.js/src/middlewares/sigma.middlewares.copy.js"></script>
-  <script src="/sigma.js/src/misc/sigma.misc.animation.js"></script>
-  <script src="/sigma.js/src/misc/sigma.misc.bindEvents.js"></script>
-  <script src="/sigma.js/src/misc/sigma.misc.bindDOMEvents.js"></script>
-  <script src="/sigma.js/src/misc/sigma.misc.drawHovers.js"></script>
-  <!-- END SIGMA IMPORTS -->
-  <script src="/sigma.js/plugins/sigma.parsers.gexf/gexf-parser.js"></script>
-  <script src="/sigma.js/plugins/sigma.parsers.gexf/sigma.parsers.gexf.js"></script>
-  <script src="/sigma.js/plugins/sigma.plugins.filter/sigma.plugins.filter.js"></script>
-  <script>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+<script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js"
+        integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U"
+        crossorigin="anonymous"></script>
+<script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js"
+        integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9"
+        crossorigin="anonymous"></script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-117836235-1"></script>
+<script>$(document).ready(function () {
+    $('body').bootstrapMaterialDesign();
+});</script>
+<script>
+    $('#button').click(function () {
+        window.location.replace('/search/' + encodeURIComponent($('#search').val()))
+        return false
+    })
+</script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'UA-117836235-1');
+</script>
+<script src="/sigma.js/src/sigma.core.js"></script>
+<script src="/sigma.js/src/conrad.js"></script>
+<script src="/sigma.js/src/utils/sigma.utils.js"></script>
+<script src="/sigma.js/src/utils/sigma.polyfills.js"></script>
+<script src="/sigma.js/src/sigma.settings.js"></script>
+<script src="/sigma.js/src/classes/sigma.classes.dispatcher.js"></script>
+<script src="/sigma.js/src/classes/sigma.classes.configurable.js"></script>
+<script src="/sigma.js/src/classes/sigma.classes.graph.js"></script>
+<script src="/sigma.js/src/classes/sigma.classes.camera.js"></script>
+<script src="/sigma.js/src/classes/sigma.classes.quad.js"></script>
+<script src="/sigma.js/src/classes/sigma.classes.edgequad.js"></script>
+<script src="/sigma.js/src/captors/sigma.captors.mouse.js"></script>
+<script src="/sigma.js/src/captors/sigma.captors.touch.js"></script>
+<script src="/sigma.js/src/renderers/sigma.renderers.canvas.js"></script>
+<script src="/sigma.js/src/renderers/sigma.renderers.webgl.js"></script>
+<script src="/sigma.js/src/renderers/sigma.renderers.svg.js"></script>
+<script src="/sigma.js/src/renderers/sigma.renderers.def.js"></script>
+<script src="/sigma.js/src/renderers/webgl/sigma.webgl.nodes.def.js"></script>
+<script src="/sigma.js/src/renderers/webgl/sigma.webgl.nodes.fast.js"></script>
+<script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.def.js"></script>
+<script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.fast.js"></script>
+<script src="/sigma.js/src/renderers/webgl/sigma.webgl.edges.arrow.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.labels.def.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.hovers.def.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.nodes.def.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.def.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.curve.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.arrow.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edges.curvedArrow.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.def.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.curve.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.arrow.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.edgehovers.curvedArrow.js"></script>
+<script src="/sigma.js/src/renderers/canvas/sigma.canvas.extremities.def.js"></script>
+<script src="/sigma.js/src/renderers/svg/sigma.svg.utils.js"></script>
+<script src="/sigma.js/src/renderers/svg/sigma.svg.nodes.def.js"></script>
+<script src="/sigma.js/src/renderers/svg/sigma.svg.edges.def.js"></script>
+<script src="/sigma.js/src/renderers/svg/sigma.svg.edges.curve.js"></script>
+<script src="/sigma.js/src/renderers/svg/sigma.svg.labels.def.js"></script>
+<script src="/sigma.js/src/renderers/svg/sigma.svg.hovers.def.js"></script>
+<script src="/sigma.js/src/middlewares/sigma.middlewares.rescale.js"></script>
+<script src="/sigma.js/src/middlewares/sigma.middlewares.copy.js"></script>
+<script src="/sigma.js/src/misc/sigma.misc.animation.js"></script>
+<script src="/sigma.js/src/misc/sigma.misc.bindEvents.js"></script>
+<script src="/sigma.js/src/misc/sigma.misc.bindDOMEvents.js"></script>
+<script src="/sigma.js/src/misc/sigma.misc.drawHovers.js"></script>
+<!-- END SIGMA IMPORTS -->
+<script src="/sigma.js/plugins/sigma.parsers.gexf/gexf-parser.js"></script>
+<script src="/sigma.js/plugins/sigma.parsers.gexf/sigma.parsers.gexf.js"></script>
+<script src="/sigma.js/plugins/sigma.plugins.filter/sigma.plugins.filter.js"></script>
+<script>
     // Add a method to the graph model that returns an
     // object with every neighbors of a node inside:
-    sigma.classes.graph.addMethod('neighbors', function(nodeId) {
-      var k,
-          neighbors = {},
-          index = this.allNeighborsIndex[nodeId] || {};
+    sigma.classes.graph.addMethod('neighbors', function (nodeId) {
+        var k,
+                neighbors = {},
+                index = this.allNeighborsIndex[nodeId] || {};
 
-      for (k in index)
-        neighbors[k] = this.nodesIndex[k];
+        for (k in index)
+            neighbors[k] = this.nodesIndex[k];
 
-      return neighbors;
+        return neighbors;
     });
 
     var data = {{{data}}}
-    s = new sigma({ 
-        graph: data,
-        container: 'graph-container',
-        settings: {
-            defaultNodeColor: '#ec5148'
-        }
-    })
- 
+            s = new sigma({
+                graph: data,
+                container: 'graph-container',
+                settings: {
+                    defaultNodeColor: '#ec5148'
+                }
+            })
+
     // We first need to save the original colors of our
     // nodes and edges, like this:
-    s.graph.nodes().forEach(function(n) {
-      n.originalColor = n.color;
+    s.graph.nodes().forEach(function (n) {
+        n.originalColor = n.color;
     });
-    s.graph.edges().forEach(function(e) {
-      e.originalColor = e.color;
+    s.graph.edges().forEach(function (e) {
+        e.originalColor = e.color;
     });
 
     // When a node is clicked, we check for each node
@@ -186,44 +219,44 @@
     // original color.
     // We do the same for the edges, and we only keep
     // edges that have both extremities colored.
-    s.bind('clickNode', function(e) {
-      var nodeId = e.data.node.id,
-          toKeep = s.graph.neighbors(nodeId);
-      toKeep[nodeId] = e.data.node;
+    s.bind('clickNode', function (e) {
+        var nodeId = e.data.node.id,
+                toKeep = s.graph.neighbors(nodeId);
+        toKeep[nodeId] = e.data.node;
 
-      s.graph.nodes().forEach(function(n) {
-        if (toKeep[n.id])
-          n.color = n.originalColor;
-        else
-          n.color = '#eee';
-      });
+        s.graph.nodes().forEach(function (n) {
+            if (toKeep[n.id])
+                n.color = n.originalColor;
+            else
+                n.color = '#eee';
+        });
 
-      s.graph.edges().forEach(function(e) {
-        if (toKeep[e.source] && toKeep[e.target])
-          e.color = e.originalColor;
-        else
-          e.color = '#eee';
-      });
+        s.graph.edges().forEach(function (e) {
+            if (toKeep[e.source] && toKeep[e.target])
+                e.color = e.originalColor;
+            else
+                e.color = '#eee';
+        });
 
-      // Since the data has been modified, we need to
-      // call the refresh method to make the colors
-      // update effective.
-      s.refresh();
+        // Since the data has been modified, we need to
+        // call the refresh method to make the colors
+        // update effective.
+        s.refresh();
     });
 
     // When the stage is clicked, we just color each
     // node and edge with its original color.
-    s.bind('clickStage', function(e) {
-      s.graph.nodes().forEach(function(n) {
-        n.color = n.originalColor;
-      });
+    s.bind('clickStage', function (e) {
+        s.graph.nodes().forEach(function (n) {
+            n.color = n.originalColor;
+        });
 
-      s.graph.edges().forEach(function(e) {
-        e.color = e.originalColor;
-      });
+        s.graph.edges().forEach(function (e) {
+            e.color = e.originalColor;
+        });
 
-      // Same as in the previous event:
-      s.refresh();
+        // Same as in the previous event:
+        s.refresh();
     })
 
 
@@ -231,39 +264,39 @@
     filter = sigma.plugins.filter(s);
 
     function applyCategoryFilter(e) {
-      var c = e.target[e.target.selectedIndex].value;
-      filter.undo('node-category')
-      filter.nodesBy(
-          function(n) {
-            return n.attributes['acategory'] === c || n.attributes['acategory'] == 'master' || c=='';
-          }, 'node-category').apply();
+        var c = e.target[e.target.selectedIndex].value;
+        filter.undo('node-category')
+        filter.nodesBy(
+                function (n) {
+                    return n.attributes['acategory'] === c || n.attributes['acategory'] == 'master' || c == '';
+                }, 'node-category').apply();
     }
 
     filter.nodesBy(
-          function(n) {
-            return true;
-          }, 'vote').apply();
+            function (n) {
+                return true;
+            }, 'vote').apply();
     filter.nodesBy(
-          function(n) {
-            return true;
-          }, 'party').apply();
+            function (n) {
+                return true;
+            }, 'party').apply();
 
-    $('input[type=radio][name=voteRadio]').change(function() {
+    $('input[type=radio][name=voteRadio]').change(function () {
         var c = this.value
         filter.undo('vote').nodesBy(
-          function(n) {
-            return c ==''||n.attributes['vote'] === c || n.attributes['vote'] == 'master';
-          }, 'vote').apply();
+                function (n) {
+                    return c == '' || n.attributes['vote'] === c || n.attributes['vote'] == 'master';
+                }, 'vote').apply();
     });
 
-    $('input[type=radio][name=partyRadio]').change(function() {
+    $('input[type=radio][name=partyRadio]').change(function () {
         var c = this.value
         filter.undo('party').nodesBy(
-          function(n) {
-            return c==''||n.attributes['acategory'] === c || n.attributes['acategory'] == 'master';
-          }, 'party').apply();
+                function (n) {
+                    return c == '' || n.attributes['acategory'] === c || n.attributes['acategory'] == 'master';
+                }, 'party').apply();
     });
-  </script>
+</script>
 </body>
 
 </html>
