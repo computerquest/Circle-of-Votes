@@ -1,6 +1,7 @@
 # Circle of Vote$
 
 NOTICE: One of the APIs this website pulls from has recently changed which has broken the website. 
+
 Url: https://circle-of-votes.herokuapp.com/home
 
 Description 
